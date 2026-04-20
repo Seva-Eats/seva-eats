@@ -8,15 +8,6 @@ import { Platform } from 'react-native';
 const tintColorLight = '#F97316';
 const tintColorDark = '#FFF8F0';
 
-// Seva Eats brand colors
-export const sevaColors = {
-  primary: '#F97316',
-  primaryDark: '#EA580C',
-  background: '#FFF8F0', // Creamy white
-  text: '#181A18',
-  textSecondary: '#6B7280',
-};
-
 export const Colors = {
   light: {
     text: '#181A18',
