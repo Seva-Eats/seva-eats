@@ -38,7 +38,7 @@ export default function Slide2Screen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.labelWrap}>
-            <Text style={styles.label}>DID YOU KNOW?</Text>
+            <Text style={styles.label}>DID YOU KNOW</Text>
           </View>
 
           <Text style={styles.headline}>The Tradition{`\n`}of Langar</Text>
@@ -60,12 +60,12 @@ export default function Slide2Screen() {
             </View>
           </View>
 
-          <Text style={styles.outro}>We bring this 500-year-old tradition to your doorstep.</Text>
+          <Text style={styles.outro}>We bring this 500-year-old tradition to your doorstep with care.</Text>
 
           <View style={styles.pillRow}>
             <Pill icon="people" label="Community" />
             <Pill icon="volunteer-activism" label="Selfless Service" />
-            <Pill icon="lock-open" label="Open to All" />
+            <Pill icon="lock-open" label="Open to all" />
           </View>
 
           <Pressable

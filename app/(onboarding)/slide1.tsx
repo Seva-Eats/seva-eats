@@ -1,4 +1,4 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, type ComponentProps } from 'react';
@@ -82,7 +82,7 @@ export default function Slide1Screen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.headline}>Access food{`\n`}without barriers</Text>
-          <Text style={styles.subtext}>Warm, authentic meals delivered wherever you are.</Text>
+          <Text style={styles.subtext}>Warm, authentic meals delivered with dignity.</Text>
 
           <View style={styles.heroCard}>
             <View style={styles.heroCircle}>
@@ -99,7 +99,7 @@ export default function Slide1Screen() {
 
               <View style={styles.foodLid} />
               <View style={styles.foodTub}>
-                <MaterialIcons name="favorite-border" size={18} color={ORANGE} />
+                <Ionicons name="heart-outline" size={18} color={ORANGE} />
               </View>
             </View>
 
@@ -108,21 +108,21 @@ export default function Slide1Screen() {
 
             <View style={styles.cardMetaRow}>
               <View style={styles.cardMetaItem}>
-                <MaterialIcons name="local-shipping" size={18} color={ORANGE} />
+                <Ionicons name="car-outline" size={18} color={ORANGE} />
                 <Text style={styles.cardMetaText}>Free delivery</Text>
               </View>
               <View style={styles.cardMetaDivider} />
               <View style={styles.cardMetaItem}>
-                <MaterialIcons name="favorite-border" size={18} color={ORANGE} />
+                <Ionicons name="heart-outline" size={18} color={ORANGE} />
                 <Text style={styles.cardMetaText}>Made with care</Text>
               </View>
             </View>
           </View>
 
           <View style={styles.ruleList}>
-            <RuleRow icon="description" label="No paperwork" />
-            <RuleRow icon="chat-bubble-outline" label="No invasive questions" />
-            <RuleRow icon="paid" label="No cost" isLast />
+            <RuleRow icon="document-text-outline" label="No paperwork" />
+            <RuleRow icon="chatbubble-ellipses-outline" label="No invasive questions" />
+            <RuleRow icon="cash-outline" label="No cost" isLast />
           </View>
 
           <View style={styles.checklist}>
@@ -147,14 +147,14 @@ function RuleRow({
   label,
   isLast = false,
 }: {
-  icon: ComponentProps<typeof MaterialIcons>['name'];
+  icon: ComponentProps<typeof Ionicons>['name'];
   label: string;
   isLast?: boolean;
 }) {
   return (
     <View style={[styles.ruleRow, !isLast && styles.ruleRowBorder]}>
       <View style={styles.ruleIconWrap}>
-        <MaterialIcons name={icon} size={26} color={ORANGE} />
+        <Ionicons name={icon} size={26} color={ORANGE} />
       </View>
       <Text style={styles.ruleText}>{label}</Text>
     </View>
@@ -165,7 +165,7 @@ function CheckItem({ label }: { label: string }) {
   return (
     <View style={styles.checkRow}>
       <View style={styles.checkCircle}>
-        <MaterialIcons name="check" size={13} color={ORANGE} />
+        <Ionicons name="checkmark" size={13} color={ORANGE} />
       </View>
       <Text style={styles.checkText}>{label}</Text>
     </View>
@@ -217,7 +217,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#5E646C',
-    maxWidth: 320,
+    maxWidth: 340,
+    letterSpacing: -0.2,
     textAlign: 'center',
     alignSelf: 'center',
   },
