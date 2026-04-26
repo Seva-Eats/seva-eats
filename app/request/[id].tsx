@@ -26,12 +26,11 @@ import { Radii, Shadows, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests, type MealRequestStatus } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
-// Progress steps configuration
+// Progress steps configuration (simplified to 4 key steps)
 const PROGRESS_STEPS: { status: MealRequestStatus; icon: string; label: string }[] = [
   { status: 'pending', icon: 'search', label: 'Finding Driver' },
   { status: 'matched', icon: 'verified', label: 'Driver Matched' },
-  { status: 'picked_up', icon: 'takeout-dining', label: 'Meal Picked Up' },
-  { status: 'on_the_way', icon: 'directions-car', label: 'On the Way' },
+  { status: 'picked_up', icon: 'directions-car', label: 'On the Way' },
   { status: 'delivered', icon: 'check-circle', label: 'Delivered' },
 ];
 
@@ -69,7 +68,7 @@ function PulsingDot({ color }: { color: string }) {
   );
 }
 
-// Progress Step Component
+// Progress Step Component (Compact Horizontal)
 function ProgressStep({
   step,
   index,
@@ -87,54 +86,53 @@ function ProgressStep({
   const isActive = index === currentIndex;
 
   return (
-    <View style={styles.progressStep}>
-      {/* Step Circle */}
-      <View style={styles.stepCircleContainer}>
+    <View style={styles.compactStep}>
+      {/* Step Circle with Icon */}
+      <View style={styles.compactStepCircleContainer}>
         {isActive && <PulsingDot color={colors.accent} />}
         <View
           style={[
-            styles.stepCircle,
+            styles.compactStepCircle,
             { backgroundColor: colors.isDark ? '#374151' : '#F3F4F6' },
-            isCompleted && styles.stepCircleCompleted,
+            isCompleted && styles.compactStepCircleCompleted,
             isActive && { backgroundColor: colors.accent },
           ]}
         >
-            <MaterialIcons
+          <MaterialIcons
             name={isCompleted ? 'check' : (step.icon as any)}
-            size={isCompleted ? 16 : 20}
+            size={isCompleted ? 14 : 18}
             color={isCompleted || isActive ? '#FFF8F0' : colors.mutedText}
           />
         </View>
       </View>
 
-      {/* Step Content */}
-      <View style={styles.stepContent}>
+      {/* Step Label Below */}
+      <View style={styles.compactStepLabelContainer}>
         <Text
           style={[
-            styles.stepLabel,
+            styles.compactStepLabel,
             { color: colors.mutedText },
-            isCompleted && styles.stepLabelCompleted,
-            isActive && { color: colors.text, fontWeight: '600' },
+            isCompleted && { color: '#059669', fontWeight: '600' },
+            isActive && { color: colors.text, fontWeight: '700' },
           ]}
+          numberOfLines={1}
         >
           {step.label}
         </Text>
         {isActive && (
-          <Text style={[styles.stepActiveHint, { color: colors.accent }]}>In progress...</Text>
+          <View style={[styles.activePulse, { backgroundColor: colors.accent }]} />
         )}
       </View>
 
-      {/* Connecting Line */}
+      {/* Connecting Line (Horizontal) */}
       {!isLast && (
-        <View style={styles.stepLine}>
-          <View
-            style={[
-              styles.stepLineInner,
-              { backgroundColor: colors.isDark ? '#374151' : '#E5E7EB' },
-              isCompleted && styles.stepLineCompleted,
-            ]}
-          />
-        </View>
+        <View
+          style={[
+            styles.compactStepConnector,
+            { backgroundColor: colors.isDark ? '#374151' : '#E5E7EB' },
+            isCompleted && { backgroundColor: '#059669' },
+          ]}
+        />
       )}
     </View>
   );
@@ -379,12 +377,12 @@ export default function RequestTrackingScreen() {
           )}
         </Animated.View>
 
-        {/* Progress Tracker */}
+        {/* Progress Tracker - Horizontal Compact */}
         {!isCancelled && (
           <Animated.View
             entering={FadeInDown.delay(200)}
             style={[
-              styles.progressCard,
+              styles.compactProgressCard,
               {
                 backgroundColor: colors.surfaceElevated,
                 borderColor: colors.border,
@@ -392,17 +390,19 @@ export default function RequestTrackingScreen() {
               },
             ]}
           >
-            <Text style={[styles.progressTitle, { color: colors.text }]}>Delivery Progress</Text>
-            {PROGRESS_STEPS.map((step, index) => (
-              <ProgressStep
-                key={step.status}
-                step={step}
-                index={index}
-                currentIndex={currentStepIndex}
-                isLast={index === PROGRESS_STEPS.length - 1}
-                colors={colors}
-              />
-            ))}
+            <Text style={[styles.compactProgressTitle, { color: colors.text }]}>Delivery Progress</Text>
+            <View style={styles.progressStepsContainer}>
+              {PROGRESS_STEPS.map((step, index) => (
+                <ProgressStep
+                  key={step.status}
+                  step={step}
+                  index={index}
+                  currentIndex={currentStepIndex}
+                  isLast={index === PROGRESS_STEPS.length - 1}
+                  colors={colors}
+                />
+              ))}
+            </View>
           </Animated.View>
         )}
 
@@ -680,6 +680,70 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     minHeight: 60,
+  },
+  // NEW COMPACT STYLES
+  compactProgressCard: {
+    borderRadius: Radii.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+  },
+  compactProgressTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: Spacing.lg,
+  },
+  progressStepsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  compactStep: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  compactStepCircleContainer: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  compactStepCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  compactStepCircleCompleted: {
+    backgroundColor: '#059669',
+  },
+  compactStepLabelContainer: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  compactStepLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  activePulse: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.8,
+  },
+  compactStepConnector: {
+    position: 'absolute',
+    height: 3,
+    top: 24,
+    left: '50%',
+    right: '-50%',
+    borderRadius: 1.5,
   },
   stepCircleContainer: {
     width: 44,
