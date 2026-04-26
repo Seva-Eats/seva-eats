@@ -1,55 +1,58 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ComponentProps } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 
-const ONBOARDING_KEY = 'onboarding-completed';
-const BG = '#FAF3EB';
-const ORANGE = '#F07B2A';
+const ORANGE = ONBOARDING_COLORS.accent;
+const CTA_BUTTON_HEIGHT = 50;
+const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide2Screen() {
   const router = useRouter();
 
   const skip = async () => {
-    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
     router.replace('/(tabs)');
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
-        {/* Nav bar */}
         <View style={styles.nav}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.navBtn}>
-            <MaterialIcons name="arrow-back" size={24} color="#4A4A4A" />
-          </Pressable>
+          <BackNavButton onPress={() => router.back()} />
           <ProgressDots total={3} current={1} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>
         </View>
 
-        {/* Body */}
-        <View style={styles.body}>
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.labelWrap}>
             <Text style={styles.label}>DID YOU KNOW?</Text>
           </View>
 
-          <Text style={styles.headline}>The Tradition{'\n'}of Langar</Text>
+          <Text style={styles.headline}>The Tradition{`\n`}of Langar</Text>
 
-          {/* Quote card */}
-          <View style={styles.card}>
+          <View style={styles.quoteCard}>
             <View style={styles.cardAccent} />
             <View style={styles.cardContent}>
-              <Text style={styles.quoteOpen}>"</Text>
+              <Text style={styles.quoteOpen}>{'\u201C'}</Text>
               <Text style={styles.quoteText}>
-                For over 500 years, Sikh gurdwaras have served langar — a free community kitchen
+                For over 500 years, Sikh gurdwaras have served langar - a free community kitchen
                 open to everyone, regardless of caste, creed, religion, or background. No one
                 leaves hungry.
               </Text>
+
               <View style={styles.quoteAttrib}>
                 <View style={styles.attribLine} />
                 <Text style={styles.attribText}>The Sikh tradition of Langar</Text>
@@ -57,58 +60,55 @@ export default function Slide2Screen() {
             </View>
           </View>
 
-          <Text style={styles.outro}>
-            We bring this 500-year-old tradition to your doorstep.
-          </Text>
+          <Text style={styles.outro}>We bring this 500-year-old tradition to your doorstep.</Text>
 
           <View style={styles.pillRow}>
-            <View style={styles.pill}>
-              <MaterialIcons name="people" size={15} color={ORANGE} />
-              <Text style={styles.pillText}>Community</Text>
-            </View>
-            <View style={styles.pill}>
-              <MaterialIcons name="volunteer-activism" size={15} color={ORANGE} />
-              <Text style={styles.pillText}>Selfless Service</Text>
-            </View>
-            <View style={styles.pill}>
-              <MaterialIcons name="lock-open" size={15} color={ORANGE} />
-              <Text style={styles.pillText}>Open to All</Text>
-            </View>
+            <Pill icon="people" label="Community" />
+            <Pill icon="volunteer-activism" label="Selfless Service" />
+            <Pill icon="lock-open" label="Open to All" />
           </View>
-        </View>
 
-        {/* CTA */}
-        <Pressable
-          style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-          onPress={() => router.push('/(onboarding)/slide3')}
-        >
-          <Text style={styles.ctaText}>Beautiful</Text>
-        </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
+            onPress={() => router.replace('/(onboarding)/slide3')}
+          >
+            <Text style={styles.ctaText}>Continue</Text>
+          </Pressable>
+        </ScrollView>
       </View>
     </SafeAreaView>
+  );
+}
+
+function Pill({ icon, label }: { icon: ComponentProps<typeof MaterialIcons>['name']; label: string }) {
+  return (
+    <View style={styles.pill}>
+      <MaterialIcons name={icon} size={15} color={ORANGE} />
+      <Text style={styles.pillText}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: BG,
+    backgroundColor: ONBOARDING_COLORS.background,
   },
   container: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 28,
+    marginBottom: 20,
   },
   navBtn: {
-    width: 40,
-    alignItems: 'center',
+    minWidth: 40,
+    alignItems: 'flex-end',
   },
   skipText: {
     fontSize: 15,
@@ -117,7 +117,10 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    gap: 18,
+  },
+  bodyContent: {
+    gap: 16,
+    paddingBottom: 8,
   },
   labelWrap: {
     alignSelf: 'flex-start',
@@ -133,15 +136,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   headline: {
-    fontSize: 34,
+    fontSize: 40,
     fontWeight: '800',
     color: '#1A1A1A',
-    lineHeight: 42,
-    letterSpacing: -0.5,
+    lineHeight: 47,
+    letterSpacing: -0.8,
   },
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
+  quoteCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     flexDirection: 'row',
     overflow: 'hidden',
     shadowColor: '#000',
@@ -160,9 +163,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   quoteOpen: {
-    fontSize: 48,
+    fontSize: 46,
     color: ORANGE,
-    lineHeight: 40,
+    lineHeight: 36,
     fontWeight: '900',
   },
   quoteText: {
@@ -214,24 +217,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   ctaBtn: {
+    marginTop: 6,
+    height: CTA_BUTTON_HEIGHT,
     backgroundColor: ORANGE,
-    borderRadius: 999,
-    paddingVertical: 17,
+    borderRadius: CTA_BUTTON_RADIUS,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: ORANGE,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    elevation: 5,
   },
   pressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
   ctaText: {
     color: '#FFF',
-    fontSize: 17,
+    fontSize: 19,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 });

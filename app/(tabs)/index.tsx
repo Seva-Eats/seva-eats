@@ -82,20 +82,6 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Beta Access Card */}
-        <View style={[styles.betaCard, { 
-          backgroundColor: colors.isDark ? 'rgba(251, 146, 60, 0.1)' : '#FFF7ED',
-          borderColor: colors.isDark ? 'rgba(251, 146, 60, 0.2)' : '#FED7AA',
-        }]}>
-          <View style={[styles.betaIconContainer, { backgroundColor: colors.isDark ? 'rgba(251, 146, 60, 0.15)' : '#FFEDD5' }]}>
-            <MaterialIcons name="restaurant" size={22} color="#F97316" />
-          </View>
-          <View style={styles.betaContent}>
-            <Text style={[styles.betaTitle, { color: colors.text }]}>Recipient access</Text>
-            <Text style={[styles.betaSubtitle, { color: colors.mutedText }]}>Beta: shelter drop-offs only</Text>
-          </View>
-        </View>
-
         {/* Community Impact Stats */}
         <View style={[styles.impactCard, { 
           backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
@@ -244,51 +230,6 @@ export default function HomeScreen() {
           <MaterialIcons name="arrow-forward" size={22} color={colors.mutedText} />
         </Pressable>
 
-        {/* How it Works Card */}
-        <View style={[styles.howItWorksCard, { 
-          backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
-          borderColor: colors.border,
-        }]}>
-          <Text style={[styles.howItWorksTitle, { color: colors.text }]}>How it works</Text>
-
-          <View style={styles.stepsContainer}>
-            <View style={styles.stepRow}>
-              <View style={[styles.stepCircle, { backgroundColor: '#F97316' }]}>
-                <Text style={styles.stepNumber}>1</Text>
-              </View>
-              <View style={styles.stepTextContainer}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>Request</Text>
-                <Text style={[styles.stepDesc, { color: colors.mutedText }]}>
-                  Choose meals and a shelter drop-off window
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.stepRow}>
-              <View style={[styles.stepCircle, { backgroundColor: '#F97316' }]}>
-                <Text style={styles.stepNumber}>2</Text>
-              </View>
-              <View style={styles.stepTextContainer}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>Pickup</Text>
-                <Text style={[styles.stepDesc, { color: colors.mutedText }]}>
-                  A volunteer collects meals from a nearby distribution hub
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.stepRow}>
-              <View style={[styles.stepCircle, { backgroundColor: '#F97316' }]}>
-                <Text style={styles.stepNumber}>3</Text>
-              </View>
-              <View style={styles.stepTextContainer}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>Drop-off</Text>
-                <Text style={[styles.stepDesc, { color: colors.mutedText }]}>
-                  Confirm delivery at the shelter
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

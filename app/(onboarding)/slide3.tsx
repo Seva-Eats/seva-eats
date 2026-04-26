@@ -4,35 +4,37 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
-
-const ONBOARDING_KEY = 'onboarding-completed';
-const BG = '#FAF3EB';
-const ORANGE = '#F07B2A';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 
 const STEPS = [
   {
-    icon: 'restaurant-menu' as const,
     title: 'Choose Your Meal',
-    desc: 'Browse available langar meals from local gurdwaras and community kitchens.',
+    desc: 'Browse available meals from\nlocal donors and restaurants',
+    icon: 'restaurant' as const,
   },
   {
-    icon: 'check-circle-outline' as const,
     title: 'Confirm Delivery',
-    desc: 'Enter your location and any needs. A volunteer will be matched to you.',
+    desc: 'Set your preferred pickup\nlocation and time',
+    icon: 'location-on' as const,
   },
   {
-    icon: 'favorite-border' as const,
     title: 'Receive with Dignity',
-    desc: 'Your warm meal arrives — no judgment, no paperwork, just care.',
+    desc: 'Get your meal delivered with\ncare and respect',
+    icon: 'volunteer-activism' as const,
   },
 ];
+
+const ORANGE = ONBOARDING_COLORS.accent;
+const CTA_BUTTON_HEIGHT = 50;
+const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide3Screen() {
   const router = useRouter();
 
   const finish = async () => {
-    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
     router.replace('/(tabs)');
   };
 
@@ -41,9 +43,7 @@ export default function Slide3Screen() {
       <View style={styles.container}>
         {/* Nav bar */}
         <View style={styles.nav}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.navBtn}>
-            <MaterialIcons name="arrow-back" size={24} color="#4A4A4A" />
-          </Pressable>
+          <BackNavButton onPress={() => router.back()} />
           <ProgressDots total={3} current={2} />
           <Pressable onPress={finish} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -57,6 +57,7 @@ export default function Slide3Screen() {
           </View>
 
           <Text style={styles.headline}>How It Works</Text>
+          <Text style={styles.subtitle}>Access nutritious meals in 3 easy steps</Text>
 
           {/* Steps */}
           <View style={styles.steps}>
@@ -65,20 +66,19 @@ export default function Slide3Screen() {
                 {/* Number + connector column */}
                 <View style={styles.stepLeft}>
                   <View style={styles.stepCircle}>
-                    <Text style={styles.stepNum}>{i + 1}</Text>
+                    <Text style={styles.stepNum}>{`0${i + 1}`}</Text>
                   </View>
                   {i < STEPS.length - 1 && <View style={styles.connector} />}
                 </View>
 
-                {/* Step card */}
-                <View style={[styles.stepCard, i < STEPS.length - 1 && styles.stepCardSpaced]}>
-                  <View style={styles.stepIconWrap}>
-                    <MaterialIcons name={step.icon} size={20} color={ORANGE} />
-                  </View>
-                  <View style={styles.stepText}>
+                <View style={[styles.stepText, i < STEPS.length - 1 && styles.stepTextSpaced]}>
+                  <View style={styles.stepHeaderRow}>
+                    <View style={styles.iconWrap}>
+                      <MaterialIcons name={step.icon} size={22} color={ORANGE} />
+                    </View>
                     <Text style={styles.stepTitle}>{step.title}</Text>
-                    <Text style={styles.stepDesc}>{step.desc}</Text>
                   </View>
+                  <Text style={styles.stepDesc}>{step.desc}</Text>
                 </View>
               </View>
             ))}
@@ -91,7 +91,6 @@ export default function Slide3Screen() {
           onPress={finish}
         >
           <Text style={styles.ctaText}>Next</Text>
-          <MaterialIcons name="arrow-forward" size={18} color="#FFF" />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -101,7 +100,7 @@ export default function Slide3Screen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: BG,
+    backgroundColor: ONBOARDING_COLORS.background,
   },
   container: {
     flex: 1,
@@ -126,106 +125,108 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    gap: 18,
+    gap: 16,
   },
   labelWrap: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFE8D4',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 6,
+    alignSelf: 'center',
   },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: ORANGE,
-    letterSpacing: 1.4,
+    letterSpacing: 2,
   },
   headline: {
-    fontSize: 34,
+    fontSize: 50,
     fontWeight: '800',
     color: '#1A1A1A',
-    letterSpacing: -0.5,
-    marginBottom: 8,
+    letterSpacing: -0.8,
+    textAlign: 'center',
+    lineHeight: 58,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 12,
   },
   steps: {
     gap: 0,
   },
   stepRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 14,
+    alignItems: 'flex-start',
   },
   stepLeft: {
-    alignItems: 'center',
-    width: 40,
-  },
-  stepCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: ORANGE,
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
+    width: 56,
+  },
+  stepCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: '#F6C48B',
+    backgroundColor: ONBOARDING_COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepNum: {
-    color: '#FFF',
-    fontSize: 16,
+    color: ORANGE,
+    fontSize: 18,
     fontWeight: '800',
   },
   connector: {
+    position: 'absolute',
+    left: 27,
+    top: 64,
     width: 2,
-    flex: 1,
-    backgroundColor: '#FFD4B8',
-    marginVertical: 2,
-  },
-  stepCard: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  stepCardSpaced: {
-    marginBottom: 12,
-  },
-  stepIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#FFF4EC',
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 64,
+    backgroundColor: '#F6C48B',
   },
   stepText: {
     flex: 1,
-    gap: 3,
+    gap: 8,
+  },
+  stepHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FAEFE6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepTextSpaced: {
+    marginBottom: 28,
   },
   stepTitle: {
-    fontSize: 15,
+    fontSize: 19,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1D2321',
+    letterSpacing: -0.3,
+    lineHeight: 24,
   },
   stepDesc: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 22,
     color: '#6B7280',
+    marginLeft: 62,
   },
   ctaBtn: {
+    height: CTA_BUTTON_HEIGHT,
     backgroundColor: ORANGE,
-    borderRadius: 999,
-    paddingVertical: 17,
+    borderRadius: CTA_BUTTON_RADIUS,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
     shadowColor: ORANGE,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFF',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.3,
   },

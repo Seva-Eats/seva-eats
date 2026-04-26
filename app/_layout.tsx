@@ -5,11 +5,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
+import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { ThemeProvider as CustomThemeProvider, LocationProvider, RequestProvider, UserProvider } from '@/context';
 import { useTheme } from '@/context/ThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-const ONBOARDING_KEY = 'onboarding-completed';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -28,7 +27,7 @@ function RootLayoutContent() {
 
   const refreshOnboarding = useCallback(async () => {
     try {
-      const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+      const value = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
       setHasOnboarded(value === 'true');
     } catch {
       setHasOnboarded(false);
@@ -50,7 +49,7 @@ function RootLayoutContent() {
     if (!isReady || hasOnboarded === null) return;
     const inOnboarding = segments[0] === '(onboarding)';
     if (!hasOnboarded && !inOnboarding) {
-      router.replace('/(onboarding)/intro');
+      router.replace('/(onboarding)');
     }
   }, [isReady, hasOnboarded, segments, router]);
 
