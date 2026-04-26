@@ -75,48 +75,7 @@ export const mealOptions: MealOption[] = [
   },
 ];
 
-// Curated meal combos
-export type MealCombo = {
-  id: string;
-  name: string;
-  description: string;
-  meals: string[]; // meal option IDs
-  icon: string;
-  popular?: boolean;
-};
-
-export const mealCombos: MealCombo[] = [
-  {
-    id: 'family-feast',
-    name: 'Family Feast',
-    description: 'Complete meal for the whole family',
-    meals: ['dal-rice', 'roti-sabzi', 'kheer'],
-    icon: 'family-restroom',
-    popular: true,
-  },
-  {
-    id: 'classic-langar',
-    name: 'Classic Langar',
-    description: 'Traditional community langar meal',
-    meals: ['dal-roti', 'sabzi-rice'],
-    icon: 'restaurant',
-    popular: true,
-  },
-  {
-    id: 'south-indian',
-    name: 'South Indian',
-    description: 'South Indian style meal',
-    meals: ['sambar-rice', 'kheer'],
-    icon: 'local-dining',
-  },
-];
-
 // Helper to get meal by ID
 export function getMealById(id: string): MealOption | undefined {
   return mealOptions.find((m) => m.id === id);
-}
-
-// Helper to get meals by category
-export function getMealsByCategory(category: MealOption['category']): MealOption[] {
-  return mealOptions.filter((m) => m.category === category);
 }

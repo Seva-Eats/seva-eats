@@ -109,9 +109,3 @@ export const communityStats: CommunityStats = {
   familiesServed: 892,
   foodSavedKg: 6423,
 };
-
-// Placeholder for explore page (can be removed later)
-export const availableRequests: any[] = [];
-
-// Placeholder for categories (can be removed later)
-export const categories: any[] = [];
