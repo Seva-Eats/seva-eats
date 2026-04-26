@@ -26,6 +26,21 @@ const SERVING_SIZES = [1, 2, 3];
 const DELIVERY_WINDOWS = ['12–2 PM', '2–4 PM', '6–8 PM'];
 const MAX_NOTE_LENGTH = 200;
 
+// Format phone number as (XXX) XXX-XXXX
+const formatPhoneNumber = (value: string): string => {
+  // Remove all non-digit characters
+  const digitsOnly = value.replace(/[^\d]/g, '');
+  
+  // Limit to 10 digits
+  const limited = digitsOnly.slice(0, 10);
+  
+  // Format: (XXX) XXX-XXXX
+  if (limited.length === 0) return '';
+  if (limited.length <= 3) return `(${limited}`;
+  if (limited.length <= 6) return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+  return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+};
+
 export default function DeliveryDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ meals: string; location: string }>();
@@ -71,6 +86,12 @@ export default function DeliveryDetailsScreen() {
     }
     if (!phone.trim()) {
       Alert.alert('Phone Required', 'Please enter your phone number so the driver can contact if there are any issues.');
+      return;
+    }
+    // Validate phone format - should have 10 digits
+    const phoneDigitsOnly = phone.replace(/[^\d]/g, '');
+    if (phoneDigitsOnly.length !== 10) {
+      Alert.alert('Invalid Phone', 'Please enter a valid 10-digit phone number.');
       return;
     }
     if (!address.trim()) {
@@ -181,19 +202,20 @@ export default function DeliveryDetailsScreen() {
             />
           </Animated.View>
 
-          {/* Phone Input */}
-          <Animated.View entering={FadeInDown.delay(200)} style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
-              placeholder="Enter your phone number"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              placeholderTextColor={colors.mutedText}
-            />
-            <Text style={[styles.helper, { color: colors.mutedText }]}>So the driver can contact if there are any issues</Text>
-          </Animated.View>
+           {/* Phone Input */}
+           <Animated.View entering={FadeInDown.delay(200)} style={styles.inputGroup}>
+             <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
+             <TextInput
+               style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+               placeholder="(XXX) XXX-XXXX"
+               value={phone}
+               onChangeText={(value) => setPhone(formatPhoneNumber(value))}
+               keyboardType="phone-pad"
+               placeholderTextColor={colors.mutedText}
+               maxLength={14}
+             />
+             <Text style={[styles.helper, { color: colors.mutedText }]}>So the driver can contact if there are any issues</Text>
+           </Animated.View>
 
            {/* Delivery Location */}
            <Animated.View entering={FadeInDown.delay(250)} style={styles.inputGroup}>
