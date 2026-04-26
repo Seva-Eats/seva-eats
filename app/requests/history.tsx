@@ -77,7 +77,9 @@ export default function RequestHistoryScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>
             Request History
           </Text>
-          <View style={styles.headerSpacer} />
+          <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+            <MaterialIcons name="account-circle" size={24} color={colors.text} />
+          </Pressable>
         </View>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
@@ -244,6 +246,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Empty State

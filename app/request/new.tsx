@@ -213,7 +213,9 @@ export default function MealSelectionScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>Choose Your Meals</Text>
           <Text style={[styles.headerSubtitle, { color: colors.mutedText }]}>All meals are 100% free</Text>
         </View>
-        <View style={styles.headerSpacer} />
+        <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+          <MaterialIcons name="account-circle" size={24} color={colors.text} />
+        </Pressable>
       </View>
 
       <ScrollView
@@ -331,6 +333,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

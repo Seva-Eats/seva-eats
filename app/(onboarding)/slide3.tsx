@@ -35,7 +35,7 @@ export default function Slide3Screen() {
 
   const finish = async () => {
     await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/(tabs)');
+    router.replace('/request/location');
   };
 
   return (

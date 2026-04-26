@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { notifyMealDelivered } from '@/utils/notifications';
+
 const REQUESTS_STORAGE_KEY = 'meal-requests';
 
 export type MealRequestStatus = 
@@ -219,6 +221,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
     statusProgression.forEach(({ status, delay }) => {
       setTimeout(() => {
+        let deliveredRequest: MealRequest | null = null;
         setRequests((prev) => {
           const updated = prev.map((req) => {
             if (req.id !== requestId) return req;
@@ -253,11 +256,22 @@ export function RequestProvider({ children }: { children: ReactNode }) {
               volunteerLocation,
               statusHistory: [...req.statusHistory, { status, timestamp: now }],
             };
+
+            if (status === 'delivered') {
+              deliveredRequest = nextRequest;
+            }
             return nextRequest;
           });
           saveRequests(updated);
           return updated;
         });
+
+        if (deliveredRequest) {
+          void notifyMealDelivered({
+            requestId: deliveredRequest.id,
+            deliveryAddress: deliveredRequest.deliveryAddress?.address,
+          });
+        }
       }, delay);
     });
   }, [saveRequests]);
@@ -289,6 +303,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
   const updateRequestStatus = useCallback(
     (requestId: string, status: MealRequestStatus, updates?: Partial<MealRequest>) => {
+      let deliveredRequest: MealRequest | null = null;
       setRequests((prev) => {
         const updated = prev.map((req) => {
           if (req.id !== requestId) return req;
@@ -299,11 +314,22 @@ export function RequestProvider({ children }: { children: ReactNode }) {
             status,
             statusHistory: [...req.statusHistory, { status, timestamp: now }],
           };
+
+          if (status === 'delivered' && req.status !== 'delivered') {
+            deliveredRequest = nextRequest;
+          }
           return nextRequest;
         });
         saveRequests(updated);
         return updated;
       });
+
+      if (deliveredRequest) {
+        void notifyMealDelivered({
+          requestId: deliveredRequest.id,
+          deliveryAddress: deliveredRequest.deliveryAddress?.address,
+        });
+      }
     },
     [saveRequests]
   );

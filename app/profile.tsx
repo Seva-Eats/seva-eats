@@ -15,13 +15,28 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LocationPicker } from '@/components/location-picker';
+import { QuickActionCard } from '@/components/quick-action-card';
 import { Radii, Spacing } from '@/constants/theme';
-import { useUser } from '@/context';
+import { useLocation, useUser } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+
+const MAX_NAME_LENGTH = 60;
+const MAX_PHONE_DIGITS = 10;
+
+const formatPhoneNumber = (value: string): string => {
+  const digitsOnly = value.replace(/[^\d]/g, '').slice(0, MAX_PHONE_DIGITS);
+  if (digitsOnly.length === 0) return '';
+  if (digitsOnly.length <= 3) return `(${digitsOnly}`;
+  if (digitsOnly.length <= 6) {
+    return `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
+  }
+  return `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+};
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, updateProfile, clearProfile } = useUser();
+  const { userLocation } = useLocation();
   const colors = useThemeColors();
   
   const [name, setName] = useState(user?.name ?? '');
@@ -42,6 +57,11 @@ export default function ProfileScreen() {
       Alert.alert('Required', 'Please enter your phone number');
       return;
     }
+    const phoneDigitsOnly = phone.replace(/[^\d]/g, '');
+    if (phoneDigitsOnly.length !== MAX_PHONE_DIGITS) {
+      Alert.alert('Invalid Phone', 'Please enter a valid 10-digit phone number');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -58,7 +78,7 @@ export default function ProfileScreen() {
       Alert.alert('Saved', 'Your profile has been updated', [
         { text: 'OK', onPress: () => router.back() }
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to save profile');
     } finally {
       setIsSaving(false);
@@ -116,9 +136,10 @@ export default function ProfileScreen() {
                   borderColor: colors.border 
                 }]}
                 value={name}
-                onChangeText={setName}
+                onChangeText={(value) => setName(value.slice(0, MAX_NAME_LENGTH))}
                 placeholder="Enter your name"
                 placeholderTextColor={colors.mutedText}
+                maxLength={MAX_NAME_LENGTH}
               />
             </View>
 
@@ -131,10 +152,11 @@ export default function ProfileScreen() {
                   borderColor: colors.border 
                 }]}
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(value) => setPhone(formatPhoneNumber(value))}
                 placeholder="(647) 555-1234"
                 placeholderTextColor={colors.mutedText}
                 keyboardType="phone-pad"
+                maxLength={14}
               />
             </View>
 
@@ -147,12 +169,43 @@ export default function ProfileScreen() {
                   borderColor: colors.border 
                 }]}
                 value={servingSize}
-                onChangeText={setServingSize}
+                onChangeText={(value) => setServingSize(value.replace(/[^\d]/g, '').slice(0, 1))}
                 placeholder="1"
                 placeholderTextColor={colors.mutedText}
                 keyboardType="number-pad"
+                maxLength={1}
               />
               <Text style={[styles.fieldHint, { color: colors.mutedText }]}>Number of people (1-3)</Text>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick actions</Text>
+            <View style={styles.quickActionsGrid}>
+              <QuickActionCard
+                icon="assignment"
+                label="Active requests"
+                onPress={() => router.push('/requests/active' as any)}
+                testID="quick-action-active-requests"
+              />
+              <QuickActionCard
+                icon="history"
+                label="Request history"
+                onPress={() => router.push('/requests/history' as any)}
+                testID="quick-action-request-history"
+              />
+              <QuickActionCard
+                icon="place"
+                label="Nearby locations"
+                onPress={() => router.push('/locations' as any)}
+                testID="quick-action-nearby-locations"
+              />
+              <QuickActionCard
+                icon="help-outline"
+                label="Help & support"
+                onPress={() => router.push('/support' as any)}
+                testID="quick-action-help-support"
+              />
             </View>
           </View>
 
@@ -168,6 +221,10 @@ export default function ProfileScreen() {
               }}
               initialLatitude={addressLat}
               initialLongitude={addressLon}
+              currentAddress={userLocation?.address}
+              currentLat={userLocation?.latitude}
+              currentLon={userLocation?.longitude}
+              enableMapSelection
             />
           </View>
 
@@ -251,6 +308,12 @@ const styles = StyleSheet.create({
   fieldHint: {
     fontSize: 12,
     marginTop: Spacing.xs,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: Spacing.md,
   },
   saveButton: {
     borderRadius: Radii.pill,

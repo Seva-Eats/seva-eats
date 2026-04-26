@@ -2,12 +2,12 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -108,7 +108,9 @@ export default function SupportScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>
             Help & Support
           </Text>
-          <View style={styles.headerSpacer} />
+          <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+            <MaterialIcons name="account-circle" size={24} color={colors.text} />
+          </Pressable>
         </View>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
@@ -287,6 +289,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
     marginBottom: Spacing.xl,

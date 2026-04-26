@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radii, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests } from '@/context';
@@ -65,146 +66,164 @@ export default function ActiveRequestsScreen() {
       <Stack.Screen
         options={{
           title: 'Active Requests',
-          headerLargeTitle: true,
-          headerTransparent: true,
-          headerBlurEffect: 'systemChromeMaterial',
+          headerShown: false,
         }}
       />
-      <ScrollView
+      <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+        edges={['top']}
       >
-        {activeRequests.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View
-              style={[
-                styles.emptyIconContainer,
-                {
-                  backgroundColor: colors.isDark
-                    ? 'rgba(249, 115, 22, 0.15)'
-                    : 'rgba(249, 115, 22, 0.1)',
-                },
-              ]}
-            >
-              <MaterialIcons name="assignment" size={48} color="#F97316" />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              No active requests
-            </Text>
-            <Text style={[styles.emptyDesc, { color: colors.mutedText }]}>
-              You don't have any active meal requests at the moment. Start a new
-              request to get meals delivered to a shelter.
-            </Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.emptyButton,
-                { backgroundColor: '#F97316' },
-                pressed && { opacity: 0.8 },
-              ]}
-              onPress={() => router.push('/request/location')}
-            >
-              <MaterialIcons name="add" size={20} color="#FFF8F0" />
-              <Text style={styles.emptyButtonText}>Start New Request</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.requestsList}>
-            {activeRequests.map((request) => (
-              <Pressable
-                key={request.id}
-                style={({ pressed }) => [
-                  styles.requestCard,
+        <View style={styles.header}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && { opacity: 0.6 },
+            ]}
+            onPress={() => router.back()}
+          >
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Active Requests</Text>
+          <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+            <MaterialIcons name="account-circle" size={24} color={colors.text} />
+          </Pressable>
+        </View>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: colors.background }}
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={styles.content}
+        >
+          {activeRequests.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View
+                style={[
+                  styles.emptyIconContainer,
                   {
-                    backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
-                    borderColor: colors.border,
+                    backgroundColor: colors.isDark
+                      ? 'rgba(249, 115, 22, 0.15)'
+                      : 'rgba(249, 115, 22, 0.1)',
                   },
-                  pressed && { opacity: 0.7 },
                 ]}
-                onPress={() => router.push(`/request/${request.id}` as any)}
               >
-                <View style={styles.requestHeader}>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: `${getStatusColor(request.status)}15` },
-                    ]}
-                  >
-                    <MaterialIcons
-                      name={getRequestIcon(request.status) as any}
-                      size={16}
-                      color={getStatusColor(request.status)}
-                    />
-                    <Text
+                <MaterialIcons name="assignment" size={48} color="#F97316" />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                No active requests
+              </Text>
+              <Text style={[styles.emptyDesc, { color: colors.mutedText }]}>
+                You don't have any active meal requests at the moment. Start a new
+                request to get meals delivered to a shelter.
+              </Text>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.emptyButton,
+                  { backgroundColor: '#F97316' },
+                  pressed && { opacity: 0.8 },
+                ]}
+                onPress={() => router.push('/request/location')}
+              >
+                <MaterialIcons name="add" size={20} color="#FFF8F0" />
+                <Text style={styles.emptyButtonText}>Start New Request</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.requestsList}>
+              {activeRequests.map((request) => (
+                <Pressable
+                  key={request.id}
+                  style={({ pressed }) => [
+                    styles.requestCard,
+                    {
+                      backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
+                      borderColor: colors.border,
+                    },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                  onPress={() => router.push(`/request/${request.id}` as any)}
+                >
+                  <View style={styles.requestHeader}>
+                    <View
                       style={[
-                        styles.statusText,
-                        { color: getStatusColor(request.status) },
+                        styles.statusBadge,
+                        { backgroundColor: `${getStatusColor(request.status)}15` },
                       ]}
                     >
-                      {REQUEST_STATUS_LABELS[request.status]}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.requestBody}>
-                  <View style={styles.requestInfo}>
-                    <MaterialIcons
-                      name="place"
-                      size={18}
-                      color={colors.mutedText}
-                    />
-                    <Text
-                      style={[styles.requestLocation, { color: colors.text }]}
-                      numberOfLines={1}
-                    >
-                      {request.deliveryAddress?.address ?? 'Location pending'}
-                    </Text>
+                      <MaterialIcons
+                        name={getRequestIcon(request.status) as any}
+                        size={16}
+                        color={getStatusColor(request.status)}
+                      />
+                      <Text
+                        style={[
+                          styles.statusText,
+                          { color: getStatusColor(request.status) },
+                        ]}
+                      >
+                        {REQUEST_STATUS_LABELS[request.status]}
+                      </Text>
+                    </View>
                   </View>
 
-                  {request.volunteerName && request.showVolunteerName && (
+                  <View style={styles.requestBody}>
                     <View style={styles.requestInfo}>
                       <MaterialIcons
-                        name="person"
+                        name="place"
                         size={18}
                         color={colors.mutedText}
                       />
                       <Text
-                        style={[styles.requestVolunteer, { color: colors.text }]}
+                        style={[styles.requestLocation, { color: colors.text }]}
+                        numberOfLines={1}
                       >
-                        {request.volunteerName}
+                        {request.deliveryAddress?.address ?? 'Location pending'}
                       </Text>
                     </View>
-                  )}
 
-                  {request.servingSize && (
-                    <View style={styles.requestInfo}>
-                      <MaterialIcons
-                        name="restaurant"
-                        size={18}
-                        color={colors.mutedText}
-                      />
-                      <Text style={[styles.requestMeals, { color: colors.text }]}>
-                        {request.servingSize} servings
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                    {request.volunteerName && request.showVolunteerName && (
+                      <View style={styles.requestInfo}>
+                        <MaterialIcons
+                          name="person"
+                          size={18}
+                          color={colors.mutedText}
+                        />
+                        <Text
+                          style={[styles.requestVolunteer, { color: colors.text }]}
+                        >
+                          {request.volunteerName}
+                        </Text>
+                      </View>
+                    )}
 
-                <View style={styles.requestFooter}>
-                  <Text style={[styles.requestTime, { color: colors.mutedText }]}>
-                    Requested {new Date(request.createdAt).toLocaleDateString()}
-                  </Text>
-                  <MaterialIcons
-                    name="chevron-right"
-                    size={20}
-                    color={colors.mutedText}
-                  />
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </ScrollView>
+                    {request.servingSize && (
+                      <View style={styles.requestInfo}>
+                        <MaterialIcons
+                          name="restaurant"
+                          size={18}
+                          color={colors.mutedText}
+                        />
+                        <Text style={[styles.requestMeals, { color: colors.text }]}>
+                          {request.servingSize} servings
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.requestFooter}>
+                    <Text style={[styles.requestTime, { color: colors.mutedText }]}>
+                      Requested {new Date(request.createdAt).toLocaleDateString()}
+                    </Text>
+                    <MaterialIcons
+                      name="chevron-right"
+                      size={20}
+                      color={colors.mutedText}
+                    />
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
     </>
   );
 }
@@ -216,6 +235,29 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
     paddingBottom: 120,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Empty State

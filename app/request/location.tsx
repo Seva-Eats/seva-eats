@@ -113,7 +113,9 @@ export default function LocationSelectionScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>Choose Pickup Hub</Text>
           <Text style={[styles.headerSubtitle, { color: colors.mutedText }]}>Select a nearby gurdwara hub</Text>
         </View>
-        <View style={styles.headerSpacer} />
+        <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+          <MaterialIcons name="account-circle" size={24} color={colors.text} />
+        </Pressable>
       </View>
 
       <ScrollView
@@ -209,6 +211,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

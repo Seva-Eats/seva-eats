@@ -1,7 +1,9 @@
 import { Radii, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 
 interface LocationPickerProps {
   address: string;
@@ -13,6 +15,7 @@ interface LocationPickerProps {
   currentAddress?: string;
   currentLat?: number;
   currentLon?: number;
+  enableMapSelection?: boolean;
 }
 
 export function LocationPicker({
@@ -25,14 +28,33 @@ export function LocationPicker({
   currentAddress,
   currentLat,
   currentLon,
+  enableMapSelection = false,
 }: LocationPickerProps) {
   const colors = useThemeColors();
+  const [selectedLat, setSelectedLat] = useState(initialLatitude);
+  const [selectedLon, setSelectedLon] = useState(initialLongitude);
+  const [showMap, setShowMap] = useState(enableMapSelection);
+
+  useEffect(() => {
+    setSelectedLat(initialLatitude);
+    setSelectedLon(initialLongitude);
+  }, [initialLatitude, initialLongitude]);
 
   const handleQuickAddLocation = () => {
     if (currentAddress) {
       onAddressChange(currentAddress);
-      onLocationChange?.(currentLat ?? 43.7315, currentLon ?? -79.7624);
+      const nextLat = currentLat ?? 43.7315;
+      const nextLon = currentLon ?? -79.7624;
+      setSelectedLat(nextLat);
+      setSelectedLon(nextLon);
+      onLocationChange?.(nextLat, nextLon);
     }
+  };
+
+  const updatePinnedLocation = (latitude: number, longitude: number) => {
+    setSelectedLat(latitude);
+    setSelectedLon(longitude);
+    onLocationChange?.(latitude, longitude);
   };
 
   return (
@@ -59,6 +81,53 @@ export function LocationPicker({
           <MaterialIcons name="my-location" size={18} color={colors.accent} />
           <Text style={[styles.quickAddText, { color: colors.accent }]}>Quick add current location</Text>
         </Pressable>
+      )}
+
+      {enableMapSelection && (
+        <>
+          <Pressable
+            style={[styles.mapToggleButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+            onPress={() => setShowMap((prev) => !prev)}
+          >
+            <MaterialIcons name="map" size={18} color={colors.accent} />
+            <Text style={[styles.mapToggleText, { color: colors.text }]}>
+              {showMap ? 'Hide map' : 'Place location on map'}
+            </Text>
+          </Pressable>
+
+          {showMap && (
+            <View style={[styles.mapContainer, { borderColor: colors.border }]}> 
+              <MapView
+                style={styles.map}
+                provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : undefined}
+                initialRegion={{
+                  latitude: selectedLat,
+                  longitude: selectedLon,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+                customMapStyle={colors.isDark ? darkMapStyle : lightMapStyle}
+                showsUserLocation={Boolean(currentLat && currentLon)}
+                onPress={(event) => {
+                  const { latitude, longitude } = event.nativeEvent.coordinate;
+                  updatePinnedLocation(latitude, longitude);
+                }}
+              >
+                <Marker
+                  coordinate={{ latitude: selectedLat, longitude: selectedLon }}
+                  draggable
+                  pinColor={colors.accent}
+                  onDragEnd={(event) => {
+                    const { latitude, longitude } = event.nativeEvent.coordinate;
+                    updatePinnedLocation(latitude, longitude);
+                  }}
+                />
+              </MapView>
+
+              <Text style={[styles.mapHint, { color: colors.mutedText }]}>Tap the map or drag the pin to set your address location.</Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -291,5 +360,34 @@ const styles = StyleSheet.create({
   quickAddText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  mapToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+  },
+  mapToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  mapContainer: {
+    marginTop: Spacing.sm,
+    borderRadius: Radii.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  map: {
+    height: 220,
+    width: '100%',
+  },
+  mapHint: {
+    fontSize: 12,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
 });

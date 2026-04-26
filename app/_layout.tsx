@@ -9,6 +9,7 @@ import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { ThemeProvider as CustomThemeProvider, LocationProvider, RequestProvider, UserProvider } from '@/context';
 import { useTheme } from '@/context/ThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { configureNotificationsAsync } from '@/utils/notifications';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -39,6 +40,10 @@ function RootLayoutContent() {
   useEffect(() => {
     refreshOnboarding();
   }, [refreshOnboarding]);
+
+  useEffect(() => {
+    void configureNotificationsAsync();
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;

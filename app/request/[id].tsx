@@ -25,6 +25,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Radii, Shadows, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests, type MealRequestStatus } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import {
+  markTrackingNotificationsPrompted,
+  requestTrackingNotificationsPermission,
+  shouldPromptForTrackingNotifications,
+} from '@/utils/notifications';
 
 // Progress steps configuration (simplified to 4 key steps)
 const PROGRESS_STEPS: { status: MealRequestStatus; icon: string; label: string }[] = [
@@ -281,6 +286,44 @@ export default function RequestTrackingScreen() {
     }
   }, [request, router]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const promptForNotifications = async () => {
+      if (!request) return;
+      if (request.status === 'delivered' || request.status === 'cancelled') return;
+
+      const shouldPrompt = await shouldPromptForTrackingNotifications();
+      if (!shouldPrompt || !isActive) return;
+
+      Alert.alert(
+        'Enable delivery updates?',
+        'We can notify you when your meal is delivered.',
+        [
+          {
+            text: 'Not now',
+            style: 'cancel',
+            onPress: () => {
+              void markTrackingNotificationsPrompted(false);
+            },
+          },
+          {
+            text: 'Enable',
+            onPress: () => {
+              void requestTrackingNotificationsPermission();
+            },
+          },
+        ]
+      );
+    };
+
+    void promptForNotifications();
+
+    return () => {
+      isActive = false;
+    };
+  }, [request]);
+
   if (!request) {
     return null;
   }
@@ -329,7 +372,9 @@ export default function RequestTrackingScreen() {
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           {isDelivered ? 'Delivered!' : isCancelled ? 'Cancelled' : 'Tracking'}
         </Text>
-        <View style={styles.headerSpacer} />
+        <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+          <MaterialIcons name="account-circle" size={24} color={colors.text} />
+        </Pressable>
       </View>
 
       <ScrollView
@@ -610,6 +655,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

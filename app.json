@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.advay.sewaeats",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to show nearby Seva Eats drop-off points and delivery updates.",
+        "NSUserNotificationUsageDescription": "We use notifications to let you know when your meal is delivered.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -22,6 +23,7 @@
         "foregroundImage": "./assets/images/logo.png"
       },
       "permissions": [
+        "POST_NOTIFICATIONS",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
       ],
@@ -49,6 +51,7 @@
       ],
       "expo-font",
       "expo-image",
+      "expo-notifications",
       "expo-web-browser"
     ],
     "experiments": {

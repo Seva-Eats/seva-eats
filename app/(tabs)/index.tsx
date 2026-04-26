@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { QuickActionCard } from '@/components/quick-action-card';
 import { communityStats } from '@/constants/mock-data';
 import { Radii, Spacing } from '@/constants/theme';
 import { useLocation, useRequests } from '@/context';
@@ -109,37 +108,6 @@ export default function HomeScreen() {
               </Text>
               <Text style={[styles.statLabel, { color: colors.mutedText }]}>Volunteers</Text>
             </View>
-          </View>
-        </View>
-
-        {/* Quick Actions Section */}
-        <View style={styles.quickActionsContainer}>
-          <Text style={[styles.quickActionsTitle, { color: colors.text }]}>Quick actions</Text>
-          <View style={styles.quickActionsGrid}>
-            <QuickActionCard
-              icon="assignment"
-              label="Active requests"
-              onPress={() => router.push('/requests/active' as any)}
-              testID="quick-action-active-requests"
-            />
-            <QuickActionCard
-              icon="history"
-              label="Request history"
-              onPress={() => router.push('/requests/history' as any)}
-              testID="quick-action-request-history"
-            />
-            <QuickActionCard
-              icon="place"
-              label="Nearby locations"
-              onPress={() => router.push('/locations' as any)}
-              testID="quick-action-nearby-locations"
-            />
-            <QuickActionCard
-              icon="help-outline"
-              label="Help & support"
-              onPress={() => router.push('/support' as any)}
-              testID="quick-action-help-support"
-            />
           </View>
         </View>
 
@@ -356,23 +324,6 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
-  },
-
-  // Quick Actions Section
-  quickActionsContainer: {
-    marginBottom: Spacing.xl,
-  },
-  quickActionsTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    marginBottom: Spacing.md,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: Spacing.md,
   },
 
   // Active Request Banner

@@ -25,6 +25,7 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 const SERVING_SIZES = [1, 2, 3];
 const DELIVERY_WINDOWS = ['12–2 PM', '2–4 PM', '6–8 PM'];
 const MAX_NOTE_LENGTH = 200;
+const MAX_NAME_LENGTH = 60;
 
 // Format phone number as (XXX) XXX-XXXX
 const formatPhoneNumber = (value: string): string => {
@@ -162,7 +163,9 @@ export default function DeliveryDetailsScreen() {
             <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Delivery Details</Text>
-          <View style={styles.headerSpacer} />
+          <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
+            <MaterialIcons name="account-circle" size={24} color={colors.text} />
+          </Pressable>
         </View>
 
         <ScrollView
@@ -196,9 +199,10 @@ export default function DeliveryDetailsScreen() {
               style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
               placeholder="Enter your full name"
               value={name}
-              onChangeText={setName}
+              onChangeText={(value) => setName(value.slice(0, MAX_NAME_LENGTH))}
               autoCapitalize="words"
               placeholderTextColor={colors.mutedText}
+              maxLength={MAX_NAME_LENGTH}
             />
           </Animated.View>
 
@@ -432,6 +436,12 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
