@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Radii, Shadows, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests, type MealRequestStatus } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useDeliveryTracking } from '@/hooks/use-delivery-tracking';
 import { generateDeliveryRoute, type Coordinate } from '@/lib/pathfinding';
 import {
     markTrackingNotificationsPrompted,
@@ -287,6 +288,16 @@ export default function RequestTrackingScreen() {
 
   // Get fresh request data on each render
   const request = requests.find((r) => r.id === id);
+
+  // Enable Dynamic Island tracking for in-progress deliveries
+  useDeliveryTracking({
+    orderId: request?.id ?? '',
+    driverName: request?.driver?.name ?? 'Your Driver',
+    driverPhone: request?.driver?.phone ?? '',
+    deliveryLatitude: request?.deliveryAddress?.latitude ?? 0,
+    deliveryLongitude: request?.deliveryAddress?.longitude ?? 0,
+    enabled: request?.status === 'picked_up' || request?.status === 'matched',
+  });
 
   useEffect(() => {
     if (!request) {
