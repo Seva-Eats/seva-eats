@@ -18,7 +18,7 @@ export default function Slide2Screen() {
 
   const skip = async () => {
     await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/(onboarding)/slide3');
+    router.replace('/(onboarding)/slide4' as any);
   };
 
   return (
@@ -26,7 +26,7 @@ export default function Slide2Screen() {
       <View style={styles.container}>
         <View style={styles.nav}>
           <BackNavButton onPress={() => router.back()} />
-          <ProgressDots total={3} current={1} />
+          <ProgressDots total={4} current={1} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>

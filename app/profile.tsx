@@ -107,7 +107,7 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'You will need to sign in again to continue.', [
+    Alert.alert('Sign Out', 'You will need to continue with account setup again.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign Out',
@@ -118,7 +118,7 @@ export default function ProfileScreen() {
             [AUTH_STORAGE_FLAG_KEY, 'false'],
             [ONBOARDING_STORAGE_KEY, 'true'],
           ]);
-          router.replace('/(onboarding)/slide3');
+          router.replace('/(onboarding)/slide4' as any);
         },
       },
     ]);
@@ -258,9 +258,9 @@ export default function ProfileScreen() {
               ) : (
                 <Pressable
                   style={[styles.authPrimaryButton, { backgroundColor: colors.accent }]}
-                  onPress={() => router.push('/(onboarding)/slide3')}
+                  onPress={() => router.push('/(onboarding)/slide4' as any)}
                 >
-                  <Text style={styles.authPrimaryButtonText}>Sign In</Text>
+                  <Text style={styles.authPrimaryButtonText}>Continue Account Setup</Text>
                 </Pressable>
               )}
             </View>

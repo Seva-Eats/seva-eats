@@ -26,9 +26,9 @@ import { Radii, Shadows, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests, type MealRequestStatus } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
-  markTrackingNotificationsPrompted,
-  requestTrackingNotificationsPermission,
-  shouldPromptForTrackingNotifications,
+    markTrackingNotificationsPrompted,
+    requestTrackingNotificationsPermission,
+    shouldPromptForTrackingNotifications,
 } from '@/utils/notifications';
 
 // Progress steps configuration (simplified to 4 key steps)
@@ -60,7 +60,7 @@ function PulsingDot({ color }: { color: string }) {
       -1,
       true
     );
-  }, []);
+  }, [opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

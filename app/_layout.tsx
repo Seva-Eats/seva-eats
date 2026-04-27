@@ -87,14 +87,14 @@ function RootLayoutContent() {
     }
 
     if (hasOnboarded && !isAuthenticated && currentSegment !== '(onboarding)') {
-      router.replace('/(onboarding)/slide3');
+      router.replace('/(onboarding)/slide4' as any);
       return;
     }
 
     if (hasOnboarded && isAuthenticated && inOnboarding) {
       router.replace('/request/location');
     }
-  }, [isReady, hasOnboarded, segments, router, user?.isAuthenticated]);
+  }, [isReady, hasOnboarded, segments, router, user?.isAuthenticated, segmentKey]);
 
   if (!isReady || isUserLoading) {
     return null;

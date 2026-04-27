@@ -106,11 +106,9 @@ export default function LocationSelectionScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.replace('/(onboarding)/slide3')} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
-        </Pressable>
+        <View style={styles.headerSpacer} />
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Choose Pickup Hub</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Choose Your Seva Hub</Text>
           <Text style={[styles.headerSubtitle, { color: colors.mutedText }]}>Select a nearby gurdwara hub</Text>
         </View>
         <Pressable onPress={() => router.push('/profile')} style={styles.profileButton}>
@@ -191,12 +189,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerCenter: {
     alignItems: 'center',

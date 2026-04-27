@@ -23,6 +23,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@supabase/supabase-js": "^2.104.1",
     "expo": "~55.0.15",
     "expo-blur": "~55.0.14",
     "expo-constants": "~55.0.14",
@@ -56,6 +57,7 @@
     "@types/react": "~19.2.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~55.0.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },

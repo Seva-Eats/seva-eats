@@ -1,11 +1,11 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Stack, useRouter } from 'expo-router';
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -111,7 +111,7 @@ export default function ActiveRequestsScreen() {
                 No active requests
               </Text>
               <Text style={[styles.emptyDesc, { color: colors.mutedText }]}>
-                You don't have any active meal requests at the moment. Start a new
+                You don&apos;t have any active meal requests at the moment. Start a new
                 request to get meals delivered to a shelter.
               </Text>
               <Pressable

@@ -104,7 +104,7 @@ export default function RequestHistoryScreen() {
               No request history
             </Text>
             <Text style={[styles.emptyDesc, { color: colors.mutedText }]}>
-              You haven't completed any meal requests yet. Your delivered and
+              You haven&apos;t completed any meal requests yet. Your delivered and
               cancelled requests will appear here.
             </Text>
             <Pressable

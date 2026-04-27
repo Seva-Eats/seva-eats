@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radii, Spacing } from '@/constants/theme';
+import { useUser } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -24,8 +25,13 @@ function LogoMark({ size }: { size: number }) {
 export default function IndexScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const { user } = useUser();
 
   const handleContinue = () => {
+    if (user?.isAuthenticated) {
+      router.replace('/request/location');
+      return;
+    }
     router.push('/(onboarding)/slide1');
   };
 
