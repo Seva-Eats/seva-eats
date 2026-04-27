@@ -85,6 +85,7 @@ function RootLayoutContent() {
         const completed = await completeAuthFromUrl(incomingUrl);
         if (!completed || !isMounted) return;
         await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+        setHasOnboarded(true);
       } catch {
         // no-op
       }
@@ -110,14 +111,15 @@ function RootLayoutContent() {
     if (!isReady || hasOnboarded === null) return;
     const currentSegment = segments[0] as string | undefined;
     const inOnboarding = currentSegment === '(onboarding)';
+    const inAuthCallback = currentSegment === 'auth-callback';
     const isAuthenticated = !!user?.isAuthenticated;
 
-    if (!hasOnboarded && !inOnboarding) {
+    if (!hasOnboarded && !inOnboarding && !inAuthCallback) {
       router.replace('/(onboarding)');
       return;
     }
 
-    if (hasOnboarded && !isAuthenticated && currentSegment !== '(onboarding)') {
+    if (hasOnboarded && !isAuthenticated && currentSegment !== '(onboarding)' && !inAuthCallback) {
       router.replace('/(onboarding)/slide4' as any);
       return;
     }
@@ -135,6 +137,7 @@ function RootLayoutContent() {
     <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="request/location" options={{ headerShown: false, gestureEnabled: false }} />

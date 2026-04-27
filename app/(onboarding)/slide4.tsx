@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -30,7 +31,10 @@ export default function Slide4Screen() {
   const [email, setEmail] = useState('');
   const [isEmailLoading, setIsEmailLoading] = useState(false);
 
-  const redirectTo = useMemo(() => 'sevaeats://auth-callback', []);
+  const redirectTo = useMemo(
+    () => Linking.createURL('auth-callback', { scheme: 'sevaeats' }),
+    []
+  );
 
   const handleBack = () => {
     if (router.canGoBack()) {
