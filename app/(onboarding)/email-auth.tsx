@@ -1,12 +1,12 @@
 import Constants from 'expo-constants';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
-import { ONBOARDING_COLORS } from '@/constants/onboarding';
+import { ONBOARDING_COLORS, ONBOARDING_TOKENS } from '@/constants/onboarding';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 
 const ORANGE = ONBOARDING_COLORS.accent;
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     minHeight: 48,
-    borderRadius: 12,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     backgroundColor: ORANGE,
     alignItems: 'center',
     justifyContent: 'center',

@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
-import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 import { useUser } from '@/context';
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   },
   emailButton: {
     minHeight: 48,
-    borderRadius: 12,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     backgroundColor: ORANGE,
     alignItems: 'center',
     justifyContent: 'center',
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   signupButton: {
     minHeight: 46,
-    borderRadius: 12,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     borderWidth: 1,
     borderColor: ORANGE,
     alignItems: 'center',

@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     marginLeft: 62,
   },
   ctaBtn: {
-    height: ONBOARDING_TOKENS.ctaHeight,
+    height: ONBOARDING_TOKENS.smallCtaHeight,
     backgroundColor: ORANGE,
     borderRadius: ONBOARDING_TOKENS.ctaRadius,
     alignItems: 'center',

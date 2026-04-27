@@ -1,3 +1,4 @@
+import { ONBOARDING_TOKENS } from '@/constants/onboarding';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -17,7 +18,7 @@ const styles = StyleSheet.create({
   button: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     borderWidth: 1,
     borderColor: '#E9DED3',
     alignItems: 'center',
