@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LocationPicker } from '@/components/location-picker';
 import { QuickActionCard } from '@/components/quick-action-card';
-import { AUTH_STORAGE_FLAG_KEY, AUTH_PROVIDER_LABELS } from '@/constants/auth';
+import { AUTH_PROVIDER_LABELS, AUTH_STORAGE_FLAG_KEY } from '@/constants/auth';
 import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { Radii, Spacing } from '@/constants/theme';
 import { useLocation, useUser } from '@/context';
