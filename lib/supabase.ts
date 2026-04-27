@@ -16,3 +16,10 @@ export const supabase = hasSupabaseConfig
       },
     })
   : null;
+
+export async function getCurrentSession() {
+  if (!supabase) return null;
+  const { data, error } = await supabase.auth.getSession();
+  if (error) return null;
+  return data.session ?? null;
+}

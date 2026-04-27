@@ -5,7 +5,6 @@ import { type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 
@@ -25,7 +24,7 @@ export default function Slide2Screen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <View style={styles.navSpacer} />
           <ProgressDots total={4} current={1} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -70,7 +69,7 @@ export default function Slide2Screen() {
 
           <Pressable
             style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-            onPress={() => router.replace('/(onboarding)/slide3')}
+            onPress={() => router.push('/(onboarding)/slide3')}
           >
             <Text style={styles.ctaText}>Continue</Text>
           </Pressable>
@@ -105,6 +104,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
+  },
+  navSpacer: {
+    width: 40,
   },
   navBtn: {
     minWidth: 40,

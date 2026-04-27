@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { AUTH_STORAGE_FLAG_KEY } from '@/constants/auth';
+import { getCurrentSession, supabase } from '@/lib/supabase';
 
 const USER_STORAGE_KEY = 'user-profile';
 
@@ -83,16 +84,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async () => {
     try {
+      const session = await getCurrentSession();
       const stored = await AsyncStorage.getItem(USER_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        const normalized = normalizeUser(parsed);
+        const normalized = normalizeUser({
+          ...parsed,
+          isAuthenticated: session ? true : parsed.isAuthenticated,
+          authProvider: session ? (parsed.authProvider ?? 'google') : parsed.authProvider,
+        });
         setUser(normalized);
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
       } else {
-        // Create default user
-        setUser(defaultUser);
-        await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
+        const seedUser = {
+          ...defaultUser,
+          isAuthenticated: !!session,
+          authProvider: session ? 'google' : null,
+        };
+        setUser(seedUser);
+        await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(seedUser));
       }
     } catch (error) {
       console.error('Failed to load user:', error);
@@ -139,6 +149,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (supabase) {
+      supabase.auth.signOut().catch(console.error);
+    }
     setUser((prev) => {
       const base = prev ?? defaultUser;
       const updated: UserProfile = {

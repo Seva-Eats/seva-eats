@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 
@@ -42,7 +41,7 @@ export default function Slide3Screen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <View style={styles.navSpacer} />
           <ProgressDots total={4} current={2} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -83,7 +82,7 @@ export default function Slide3Screen() {
 
         <Pressable
           style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-          onPress={() => router.replace('/(onboarding)/slide4' as any)}
+          onPress={() => router.push('/(onboarding)/slide4' as any)}
         >
           <Text style={styles.ctaText}>Next</Text>
         </Pressable>
@@ -108,6 +107,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 28,
+  },
+  navSpacer: {
+    width: 40,
   },
   navBtn: {
     width: 40,

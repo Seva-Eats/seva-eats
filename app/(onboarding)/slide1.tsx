@@ -13,7 +13,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 
@@ -69,7 +68,7 @@ export default function Slide1Screen() {
       <View style={styles.container}>
         {/* Nav bar */}
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <View style={styles.navSpacer} />
           <ProgressDots total={4} current={0} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -132,7 +131,7 @@ export default function Slide1Screen() {
 
           <Pressable
             style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-            onPress={() => router.replace('/(onboarding)/slide2')}
+            onPress={() => router.push('/(onboarding)/slide2')}
           >
             <Text style={styles.ctaText}>Learn more</Text>
           </Pressable>
@@ -188,6 +187,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  navSpacer: {
+    width: 40,
   },
   navBtn: {
     minWidth: 40,

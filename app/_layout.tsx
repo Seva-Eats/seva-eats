@@ -91,7 +91,7 @@ function RootLayoutContent() {
       return;
     }
 
-    if (hasOnboarded && isAuthenticated && inOnboarding) {
+    if (hasOnboarded && isAuthenticated && inOnboarding && segments.length > 1) {
       router.replace('/request/location');
     }
   }, [isReady, hasOnboarded, segments, router, user?.isAuthenticated, segmentKey]);
@@ -106,6 +106,7 @@ function RootLayoutContent() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="request/location" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="request/new" options={{ headerShown: false }} />
         <Stack.Screen name="request/details" options={{ headerShown: false }} />
         <Stack.Screen name="request/[id]" options={{ headerShown: false }} />

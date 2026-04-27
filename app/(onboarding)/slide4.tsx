@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -25,8 +26,10 @@ const providerName: Record<OAuthProvider, string> = {
 
 export default function Slide4Screen() {
   const router = useRouter();
-  const { mockSignIn } = useUser();
+  const { mockSignIn, clearProfile } = useUser();
   const [isLoading, setIsLoading] = useState<OAuthProvider | null>(null);
+
+  const redirectTo = useMemo(() => Linking.createURL('/request/location'), []);
 
   const completeSession = async (provider: OAuthProvider) => {
     if (!supabase || !hasSupabaseConfig) {
@@ -37,7 +40,8 @@ export default function Slide4Screen() {
       return;
     }
 
-    const redirectTo = Linking.createURL('/');
+    await clearProfile();
+
     setIsLoading(provider);
 
     try {
@@ -103,6 +107,14 @@ export default function Slide4Screen() {
         </View>
 
         <View style={styles.hero}>
+          <View style={styles.logoBadge}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logo}
+              contentFit="contain"
+              accessibilityLabel="Seva Eats logo"
+            />
+          </View>
           <Text style={styles.badge}>ACCOUNT</Text>
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>
@@ -111,6 +123,8 @@ export default function Slide4Screen() {
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.cardTitle}>Continue with</Text>
+
           <Pressable
             style={({ pressed }) => [
               styles.oauthButton,
@@ -120,7 +134,7 @@ export default function Slide4Screen() {
             onPress={() => completeSession('apple')}
             disabled={isLoading !== null}
           >
-            <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+            <Ionicons name="logo-apple" size={18} color="#FFFFFF" style={styles.oauthIcon} />
             <Text style={styles.appleButtonText}>
               {isLoading === 'apple' ? 'Please wait...' : 'Continue with Apple'}
             </Text>
@@ -135,7 +149,7 @@ export default function Slide4Screen() {
             onPress={() => completeSession('google')}
             disabled={isLoading !== null}
           >
-            <Ionicons name="logo-google" size={20} color="#111827" />
+            <Ionicons name="logo-google" size={18} color="#111111" style={styles.oauthIcon} />
             <Text style={styles.googleButtonText}>
               {isLoading === 'google' ? 'Please wait...' : 'Continue with Google'}
             </Text>
@@ -176,6 +190,22 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: 'center',
   },
+  logoBadge: {
+    width: 84,
+    height: 84,
+    borderRadius: 22,
+    backgroundColor: '#FFF0DC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#F97316',
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  logo: {
+    width: 62,
+    height: 62,
+  },
   badge: {
     color: ORANGE,
     fontSize: 12,
@@ -203,17 +233,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F2DCC5',
     padding: 18,
-    gap: 14,
+    gap: 16,
+    shadowColor: '#F97316',
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F2937',
   },
   oauthButton: {
-    minHeight: 58,
-    borderRadius: 22,
+    minHeight: 60,
+    borderRadius: 32,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     paddingHorizontal: 12,
+    paddingVertical: 4,
+    position: 'relative',
+    shadowColor: '#111111',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
   appleButton: {
     backgroundColor: '#111111',
@@ -234,6 +279,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  oauthIcon: {
+    position: 'absolute',
+    left: 18,
   },
   pressed: {
     opacity: 0.9,
