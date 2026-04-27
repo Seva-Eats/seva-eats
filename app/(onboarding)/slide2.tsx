@@ -5,12 +5,11 @@ import { type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
-import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 
 const ORANGE = ONBOARDING_COLORS.accent;
-const CTA_BUTTON_HEIGHT = 50;
-const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide2Screen() {
   const router = useRouter();
@@ -20,11 +19,19 @@ export default function Slide2Screen() {
     router.replace('/(onboarding)/slide4' as any);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(onboarding)/slide1');
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <View style={styles.nav}>
-          <View style={styles.navSpacer} />
+          <BackNavButton onPress={handleBack} />
           <ProgressDots total={4} current={1} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -95,18 +102,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingHorizontal: ONBOARDING_TOKENS.horizontalPadding,
+    paddingTop: ONBOARDING_TOKENS.topPadding,
+    paddingBottom: ONBOARDING_TOKENS.bottomPadding,
   },
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  navSpacer: {
-    width: 40,
+    marginBottom: ONBOARDING_TOKENS.navBottom,
   },
   navBtn: {
     minWidth: 40,
@@ -121,7 +125,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bodyContent: {
-    gap: 16,
+    gap: 14,
     paddingBottom: 8,
   },
   labelWrap: {
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFE8D4',
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   label: {
     fontSize: 11,
@@ -138,15 +142,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   headline: {
-    fontSize: 40,
+    fontSize: ONBOARDING_TOKENS.titleSize,
     fontWeight: '800',
     color: '#1A1A1A',
-    lineHeight: 47,
+    lineHeight: ONBOARDING_TOKENS.titleLineHeight,
     letterSpacing: -0.8,
+    textAlign: 'center',
   },
   quoteCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: ONBOARDING_TOKENS.cardRadius,
     flexDirection: 'row',
     overflow: 'hidden',
     shadowColor: '#000',
@@ -194,10 +199,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   outro: {
-    fontSize: 18,
-    lineHeight: 27,
+    fontSize: ONBOARDING_TOKENS.subtitleSize,
+    lineHeight: ONBOARDING_TOKENS.subtitleLineHeight,
     color: '#1A1A1A',
     fontWeight: '600',
+    textAlign: 'center',
   },
   pillRow: {
     flexDirection: 'row',
@@ -219,10 +225,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   ctaBtn: {
-    marginTop: 6,
-    height: CTA_BUTTON_HEIGHT,
+    marginTop: 10,
+    height: ONBOARDING_TOKENS.ctaHeight,
     backgroundColor: ORANGE,
-    borderRadius: CTA_BUTTON_RADIUS,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: ORANGE,
@@ -237,7 +243,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFF',
-    fontSize: 19,
+    fontSize: ONBOARDING_TOKENS.ctaTextSize,
     fontWeight: '700',
     letterSpacing: 0.2,
   },

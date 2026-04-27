@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { useUser } from '@/context';
@@ -30,7 +30,15 @@ export default function Slide4Screen() {
   const [email, setEmail] = useState('');
   const [isEmailLoading, setIsEmailLoading] = useState(false);
 
-  const redirectTo = useMemo(() => Linking.createURL('/request/location'), []);
+  const redirectTo = useMemo(() => 'sevaeats://auth-callback', []);
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(onboarding)/slide3');
+  };
 
   useEffect(() => {
     if (user?.isAuthenticated) {
@@ -128,8 +136,13 @@ export default function Slide4Screen() {
       }
 
       Alert.alert('Check your email', 'We sent a magic link to finish sign in.');
-    } catch {
-      Alert.alert('Unable to send link', 'Please try again in a moment.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('user') && message.includes('not')) {
+        Alert.alert('No account found', 'Use "Sign up with Email" below to create a new account.');
+      } else {
+        Alert.alert('Unable to send link', 'Please try again in a moment.');
+      }
     } finally {
       setIsEmailLoading(false);
     }
@@ -165,8 +178,13 @@ export default function Slide4Screen() {
       }
 
       Alert.alert('Check your email', 'We sent a verification link to create your account.');
-    } catch {
-      Alert.alert('Unable to sign up', 'Please try again in a moment.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('already') || message.includes('exists')) {
+        Alert.alert('Account already exists', 'Use "Continue with Email" to sign in.');
+      } else {
+        Alert.alert('Unable to sign up', 'Please try again in a moment.');
+      }
     } finally {
       setIsEmailLoading(false);
     }
@@ -185,10 +203,7 @@ export default function Slide4Screen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.nav}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={20} color={ORANGE} />
-              <Text style={styles.backText}>Back</Text>
-            </Pressable>
+            <BackNavButton onPress={handleBack} />
             <ProgressDots total={4} current={3} />
             <View style={styles.navSpacer} />
           </View>
@@ -266,13 +281,13 @@ export default function Slide4Screen() {
 
               <Pressable
                 style={({ pressed }) => [
-                  styles.emailSecondaryButton,
-                  (pressed || isEmailLoading) && styles.pressed,
+                  styles.emailSecondaryTextWrap,
+                  (pressed || isEmailLoading) && styles.textPressed,
                 ]}
                 onPress={handleEmailSignUp}
                 disabled={isEmailLoading || isLoading !== null}
               >
-                <Text style={styles.emailSecondaryButtonText}>Sign up with Email</Text>
+                <Text style={styles.emailSecondaryText}>Sign up with Email</Text>
               </Pressable>
             </View>
           </View>
@@ -311,17 +326,6 @@ const styles = StyleSheet.create({
   },
   navSpacer: {
     width: 40,
-  },
-  backButton: {
-    minWidth: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  backText: {
-    color: ORANGE,
-    fontSize: 14,
-    fontWeight: '600',
   },
   main: {
     flex: 1,
@@ -442,25 +446,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  emailSecondaryButton: {
-    minHeight: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F3C28B',
-    backgroundColor: '#FFFFFF',
+  emailSecondaryTextWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  emailSecondaryButtonText: {
+  emailSecondaryText: {
     color: ORANGE,
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
+    textDecorationLine: 'underline',
   },
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
+  },
+  textPressed: {
+    opacity: 0.7,
   },
   footnote: {
     marginTop: 2,

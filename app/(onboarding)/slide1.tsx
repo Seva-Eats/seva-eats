@@ -13,12 +13,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
-import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 
 const ORANGE = ONBOARDING_COLORS.accent;
-const CTA_BUTTON_HEIGHT = 50;
-const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide1Screen() {
   const router = useRouter();
@@ -63,12 +62,20 @@ export default function Slide1Screen() {
     router.replace('/(onboarding)/slide4' as any);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/');
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
         {/* Nav bar */}
         <View style={styles.nav}>
-          <View style={styles.navSpacer} />
+          <BackNavButton onPress={handleBack} />
           <ProgressDots total={4} current={0} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -178,18 +185,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 18,
+    paddingHorizontal: ONBOARDING_TOKENS.horizontalPadding,
+    paddingTop: ONBOARDING_TOKENS.topPadding,
+    paddingBottom: ONBOARDING_TOKENS.bottomPadding,
   },
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  navSpacer: {
-    width: 40,
+    marginBottom: ONBOARDING_TOKENS.navBottom,
   },
   navBtn: {
     minWidth: 40,
@@ -204,20 +208,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bodyContent: {
-    gap: 10,
-    paddingBottom: 4,
+    gap: 14,
+    paddingBottom: 8,
   },
   headline: {
-    fontSize: 40,
+    fontSize: ONBOARDING_TOKENS.titleSize,
     fontWeight: '800',
     color: '#15181C',
-    lineHeight: 42,
+    lineHeight: ONBOARDING_TOKENS.titleLineHeight,
     letterSpacing: -1.2,
     textAlign: 'center',
   },
   subtext: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: ONBOARDING_TOKENS.subtitleSize,
+    lineHeight: ONBOARDING_TOKENS.subtitleLineHeight,
     color: '#5E646C',
     maxWidth: 340,
     letterSpacing: -0.2,
@@ -226,8 +230,8 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginTop: 2,
-    borderRadius: 20,
-    paddingVertical: 16,
+    borderRadius: ONBOARDING_TOKENS.cardRadius,
+    paddingVertical: 14,
     paddingHorizontal: 12,
     alignItems: 'center',
   },
@@ -385,10 +389,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   ctaBtn: {
-    marginTop: 20,
-    height: CTA_BUTTON_HEIGHT,
+    marginTop: 16,
+    height: ONBOARDING_TOKENS.ctaHeight,
     backgroundColor: ORANGE,
-    borderRadius: CTA_BUTTON_RADIUS,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: ORANGE,
@@ -403,7 +407,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: ONBOARDING_TOKENS.ctaTextSize,
     fontWeight: '700',
     letterSpacing: 0.2,
   },

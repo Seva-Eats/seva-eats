@@ -4,8 +4,9 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
-import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 
 const STEPS = [
   {
@@ -26,8 +27,6 @@ const STEPS = [
 ];
 
 const ORANGE = ONBOARDING_COLORS.accent;
-const CTA_BUTTON_HEIGHT = 50;
-const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide3Screen() {
   const router = useRouter();
@@ -37,11 +36,19 @@ export default function Slide3Screen() {
     router.replace('/(onboarding)/slide4' as any);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(onboarding)/slide2');
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <View style={styles.nav}>
-          <View style={styles.navSpacer} />
+          <BackNavButton onPress={handleBack} />
           <ProgressDots total={4} current={2} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
@@ -98,22 +105,19 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingHorizontal: ONBOARDING_TOKENS.horizontalPadding,
+    paddingTop: ONBOARDING_TOKENS.topPadding,
+    paddingBottom: ONBOARDING_TOKENS.bottomPadding,
   },
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 28,
-  },
-  navSpacer: {
-    width: 40,
+    marginBottom: ONBOARDING_TOKENS.navBottom,
   },
   navBtn: {
-    width: 40,
-    alignItems: 'center',
+    minWidth: 40,
+    alignItems: 'flex-end',
   },
   skipText: {
     fontSize: 15,
@@ -122,31 +126,35 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    gap: 16,
+    gap: 14,
   },
   labelWrap: {
     alignSelf: 'center',
+    backgroundColor: '#FFE8D4',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: ORANGE,
-    letterSpacing: 2,
+    letterSpacing: 1.4,
   },
   headline: {
-    fontSize: 50,
+    fontSize: ONBOARDING_TOKENS.titleSize,
     fontWeight: '800',
     color: '#1A1A1A',
     letterSpacing: -0.8,
     textAlign: 'center',
-    lineHeight: 58,
+    lineHeight: ONBOARDING_TOKENS.titleLineHeight,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: ONBOARDING_TOKENS.subtitleSize,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 12,
+    lineHeight: ONBOARDING_TOKENS.subtitleLineHeight,
+    marginBottom: 8,
   },
   steps: {
     gap: 0,
@@ -219,9 +227,9 @@ const styles = StyleSheet.create({
     marginLeft: 62,
   },
   ctaBtn: {
-    height: CTA_BUTTON_HEIGHT,
+    height: ONBOARDING_TOKENS.ctaHeight,
     backgroundColor: ORANGE,
-    borderRadius: CTA_BUTTON_RADIUS,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: ORANGE,
@@ -236,7 +244,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: ONBOARDING_TOKENS.ctaTextSize,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
