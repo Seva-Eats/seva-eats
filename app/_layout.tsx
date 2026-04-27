@@ -111,24 +111,13 @@ function RootLayoutContent() {
     const currentSegment = segments[0] as string | undefined;
     const inOnboarding = currentSegment === '(onboarding)';
     const isAuthenticated = !!user?.isAuthenticated;
-    const onOnboardingRoot = inOnboarding && segments.length <= 1;
 
     if (!hasOnboarded && !inOnboarding) {
       router.replace('/(onboarding)');
       return;
     }
 
-    if (!hasOnboarded && onOnboardingRoot && !isAuthenticated) {
-      router.replace('/(onboarding)/slide1');
-      return;
-    }
-
     if (hasOnboarded && !isAuthenticated && currentSegment !== '(onboarding)') {
-      router.replace('/(onboarding)/slide4' as any);
-      return;
-    }
-
-    if (hasOnboarded && !isAuthenticated && onOnboardingRoot) {
       router.replace('/(onboarding)/slide4' as any);
       return;
     }

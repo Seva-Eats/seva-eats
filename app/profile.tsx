@@ -1,5 +1,6 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -148,6 +149,17 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* Avatar Section */}
+          {user?.avatarUrl && (
+            <View style={styles.avatarSection}>
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={[styles.avatar, { borderColor: colors.accent }]}
+                contentFit="cover"
+              />
+            </View>
+          )}
+
           {/* Personal Information */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Personal Information</Text>
@@ -340,6 +352,17 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    paddingVertical: Spacing.lg,
+  },
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
   },
   section: {
     marginBottom: Spacing.xl,

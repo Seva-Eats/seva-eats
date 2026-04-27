@@ -16,6 +16,7 @@ export type UserProfile = {
   name: string;
   email?: string;
   phone: string;
+  avatarUrl?: string;
   homeAddress: {
     address: string;
     latitude: number;
@@ -91,6 +92,15 @@ const getPreferredName = (session: Session | null, fallback?: string) => {
   return fallback ?? '';
 };
 
+const getAvatarUrl = (session: Session | null, fallback?: string) => {
+  if (!session) return fallback ?? '';
+  const avatar = session.user.user_metadata?.avatar_url;
+  if (typeof avatar === 'string' && avatar.length > 0) {
+    return avatar;
+  }
+  return fallback ?? '';
+};
+
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -108,6 +118,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const provider = getProviderFromSession(session);
       const email = session?.user.email;
+      const avatarUrl = getAvatarUrl(session);
 
       setUser((prev) => {
         const base = prev ?? defaultUser;
@@ -117,6 +128,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           authProvider: provider,
           email: email ?? base.email,
           name: getPreferredName(session, base.name),
+          avatarUrl: avatarUrl || base.avatarUrl,
         };
         AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser)).catch(console.error);
         if (session) {
@@ -153,6 +165,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           authProvider: session ? (provider ?? parsed.authProvider ?? 'email') : parsed.authProvider,
           email: session?.user.email ?? parsed.email,
           name: getPreferredName(session, parsed.name),
+          avatarUrl: getAvatarUrl(session, parsed.avatarUrl),
         });
         setUser(normalized);
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
@@ -164,6 +177,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           authProvider: provider,
           email: session?.user.email,
           name: getPreferredName(session, ''),
+          avatarUrl: getAvatarUrl(session, ''),
         };
         setUser(seedUser);
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(seedUser));

@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Radii, Shadows, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests, type MealRequestStatus } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { generateDeliveryRoute, type Coordinate } from '@/lib/pathfinding';
 import {
     markTrackingNotificationsPrompted,
     requestTrackingNotificationsPermission,
@@ -151,6 +152,8 @@ function RouteMapView({
   status,
   colors,
   onExpand,
+  routeCoordinates,
+  isLoadingRoute,
 }: {
   pickupLocation?: { latitude: number; longitude: number; address: string };
   deliveryLocation: { latitude: number; longitude: number; address: string };
@@ -158,6 +161,8 @@ function RouteMapView({
   status: MealRequestStatus;
   colors: ReturnType<typeof useThemeColors>;
   onExpand: () => void;
+  routeCoordinates: Coordinate[];
+  isLoadingRoute: boolean;
 }) {
   // Default pickup location if not set (use a Hub in Brampton area)
   const pickup = pickupLocation ?? {
@@ -171,15 +176,6 @@ function RouteMapView({
   const midLng = (pickup.longitude + deliveryLocation.longitude) / 2;
   const latDelta = Math.abs(pickup.latitude - deliveryLocation.latitude) * 1.8;
   const lngDelta = Math.abs(pickup.longitude - deliveryLocation.longitude) * 1.8;
-
-  // Build route coordinates
-  const routeCoordinates = [
-    { latitude: pickup.latitude, longitude: pickup.longitude },
-    ...(volunteerLocation && (status === 'on_the_way' || status === 'picked_up')
-      ? [volunteerLocation]
-      : []),
-    { latitude: deliveryLocation.latitude, longitude: deliveryLocation.longitude },
-  ];
 
   return (
     <View style={styles.mapContainer}>
@@ -230,13 +226,24 @@ function RouteMapView({
           </Marker>
         )}
 
-        {/* Route Line */}
-        <Polyline
-          coordinates={routeCoordinates}
-          strokeColor={colors.accent}
-          strokeWidth={3}
-          lineDashPattern={[10, 5]}
-        />
+        {/* Optimized Route Line */}
+        {!isLoadingRoute && routeCoordinates.length > 1 && (
+          <>
+            {/* Background line for depth */}
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor={colors.isDark ? 'rgba(249, 115, 22, 0.2)' : 'rgba(249, 115, 22, 0.15)'}
+              strokeWidth={6}
+            />
+            {/* Main route line */}
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor={colors.accent}
+              strokeWidth={3}
+              lineDashPattern={[8, 5]}
+            />
+          </>
+        )}
       </MapView>
 
       {/* Expand Button */}
@@ -275,6 +282,8 @@ export default function RequestTrackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { cancelRequest, requests } = useRequests();
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [optimizedRouteCoordinates, setOptimizedRouteCoordinates] = useState<Coordinate[]>([]);
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
 
   // Get fresh request data on each render
   const request = requests.find((r) => r.id === id);
@@ -285,6 +294,46 @@ export default function RequestTrackingScreen() {
       router.back();
     }
   }, [request, router]);
+
+  // Load optimized route
+  useEffect(() => {
+    if (!request) return;
+
+    const loadRoute = async () => {
+      try {
+        setIsLoadingRoute(true);
+        const pickup = request.gurdwaraLocation ?? {
+          latitude: 43.7315,
+          longitude: -79.7624,
+        };
+
+        const route = await generateDeliveryRoute(
+          { latitude: pickup.latitude, longitude: pickup.longitude },
+          { latitude: request.deliveryAddress.latitude, longitude: request.deliveryAddress.longitude },
+          request.volunteerLocation
+        );
+        setOptimizedRouteCoordinates(route);
+      } catch (error) {
+        console.error('Error generating route:', error);
+        // Fallback to direct route
+        setOptimizedRouteCoordinates([
+          request.gurdwaraLocation ?? {
+            latitude: 43.7315,
+            longitude: -79.7624,
+          },
+          ...(request.volunteerLocation ? [request.volunteerLocation] : []),
+          {
+            latitude: request.deliveryAddress.latitude,
+            longitude: request.deliveryAddress.longitude,
+          },
+        ]);
+      } finally {
+        setIsLoadingRoute(false);
+      }
+    };
+
+    loadRoute();
+  }, [request]);
 
   useEffect(() => {
     let isActive = true;
@@ -461,6 +510,8 @@ export default function RequestTrackingScreen() {
               status={request.status}
               colors={colors}
               onExpand={() => setIsMapExpanded(true)}
+              routeCoordinates={optimizedRouteCoordinates}
+              isLoadingRoute={isLoadingRoute}
             />
           </Animated.View>
         )}
@@ -600,22 +651,23 @@ export default function RequestTrackingScreen() {
             )}
 
             {/* Route */}
-            <Polyline
-              coordinates={[
-                {
-                  latitude: request.gurdwaraLocation?.latitude ?? 43.7315,
-                  longitude: request.gurdwaraLocation?.longitude ?? -79.7624,
-                },
-                ...(request.volunteerLocation ? [request.volunteerLocation] : []),
-                {
-                  latitude: request.deliveryAddress.latitude,
-                  longitude: request.deliveryAddress.longitude,
-                },
-              ]}
-              strokeColor={colors.accent}
-              strokeWidth={3}
-              lineDashPattern={[10, 5]}
-            />
+            {optimizedRouteCoordinates.length > 1 && (
+              <>
+                {/* Background line for depth */}
+                <Polyline
+                  coordinates={optimizedRouteCoordinates}
+                  strokeColor={colors.isDark ? 'rgba(249, 115, 22, 0.2)' : 'rgba(249, 115, 22, 0.15)'}
+                  strokeWidth={6}
+                />
+                {/* Main route line */}
+                <Polyline
+                  coordinates={optimizedRouteCoordinates}
+                  strokeColor={colors.accent}
+                  strokeWidth={3}
+                  lineDashPattern={[8, 5]}
+                />
+              </>
+            )}
           </MapView>
 
           {/* Close Button */}

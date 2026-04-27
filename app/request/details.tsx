@@ -21,6 +21,7 @@ import { pickupLocations } from '@/constants/mock-data';
 import { Radii, Spacing } from '@/constants/theme';
 import { useLocation, useRequests, useUser } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { submitSimpleMealRequest } from '@/lib/backend/orders';
 
 const SERVING_SIZES = [1, 2, 3];
 const DELIVERY_WINDOWS = ['12–2 PM', '2–4 PM', '6–8 PM'];
@@ -47,7 +48,7 @@ export default function DeliveryDetailsScreen() {
   const params = useLocalSearchParams<{ meals: string; location: string }>();
   const { userLocation } = useLocation();
   const { user } = useUser();
-  const { submitRequest, activeRequest } = useRequests();
+  const { activeRequest } = useRequests();
   const colors = useThemeColors();
 
   // Parse selected meals from URL params
@@ -79,7 +80,7 @@ export default function DeliveryDetailsScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const thankYouNoteCount = thankYouNote.length;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter your name.');
@@ -115,40 +116,54 @@ export default function DeliveryDetailsScreen() {
 
     setIsSubmitting(true);
 
-    // Create meal description from selections
-    const mealDescription = selectedMeals
-      .map((item) => `${item.quantity}x ${item.meal.name}`)
-      .join(', ');
-
-    const request = submitRequest({
-      recipientName: name.trim(),
-      recipientPhone: phone.trim(),
-      deliveryAddress: {
+    try {
+      // Submit to backend instead of local state
+      const orderResult = await submitSimpleMealRequest({
         address: address.trim(),
         latitude: selectedLat,
         longitude: selectedLon,
-      },
-      servingSize,
-      dietaryRestrictions: [],
-      pickupLocation: selectedLocation ? {
-        address: selectedLocation.address,
-        latitude: selectedLocation.location.latitude,
-        longitude: selectedLocation.location.longitude,
-      } : undefined,
-      pickupLocationId: selectedLocation?.id,
-      pickupLocationName: selectedLocation?.name,
-      driverNote: [
-        `Meals: ${mealDescription}`,
-        `Delivery: ${deliveryPreference === 'leave_at_door' ? 'Leave at door' : 'Hand to me'}`,
-        `Window: ${deliveryWindow}`,
-        selectedLocation ? `Pickup: ${selectedLocation.name}` : null,
-        thankYouNote.trim() ? `Thank you: ${thankYouNote.trim()}` : null,
-        donationAmount.trim() ? `Donation: $${donationAmount.trim()}` : null,
-      ].filter(Boolean).join('\n'),
-    });
+        servingSize,
+      });
 
-    setIsSubmitting(false);
-    router.replace(`/request/${request.id}` as any);
+      if (!orderResult.id) {
+        throw new Error('Failed to create order');
+      }
+
+      // Update user profile with the new info
+      if (user && (user.name !== name.trim() || user.phone !== phone.trim())) {
+        // Update user context could happen here but it's optional
+      }
+
+      // Show success alert
+      Alert.alert(
+        'Order Submitted!',
+        `Your meal request has been submitted. The order ID is ${orderResult.id.slice(0, 8)}...`,
+        [
+          {
+            text: 'Track Order',
+            onPress: () => {
+              setIsSubmitting(false);
+              router.replace(`/request/${orderResult.id}` as any);
+            },
+          },
+          {
+            text: 'Close',
+            style: 'cancel',
+            onPress: () => {
+              setIsSubmitting(false);
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      Alert.alert(
+        'Error',
+        'Failed to submit your meal request. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
