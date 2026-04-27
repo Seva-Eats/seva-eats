@@ -15,6 +15,8 @@ export default function OnboardingLayout() {
       <Stack.Screen name="slide2" />
       <Stack.Screen name="slide3" />
       <Stack.Screen name="slide4" />
+      <Stack.Screen name="email-auth" />
+      <Stack.Screen name="email-verify" />
     </Stack>
   );
 }

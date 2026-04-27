@@ -1,11 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
@@ -29,8 +29,6 @@ export default function Slide4Screen() {
   const router = useRouter();
   const { mockSignIn, user } = useUser();
   const [isLoading, setIsLoading] = useState<OAuthProvider | null>(null);
-  const [email, setEmail] = useState('');
-  const [isEmailLoading, setIsEmailLoading] = useState(false);
 
   const redirectTo = useMemo(() => {
     if (Constants.appOwnership === 'expo') {
@@ -96,105 +94,25 @@ export default function Slide4Screen() {
         throw exchangeResult.error;
       }
 
-      const user = exchangeResult.data.user;
+      const authUser = exchangeResult.data.user;
       await mockSignIn(provider, {
         name:
-          typeof user?.user_metadata?.full_name === 'string'
-            ? user.user_metadata.full_name
+          typeof authUser?.user_metadata?.full_name === 'string'
+            ? authUser.user_metadata.full_name
             : `${providerName[provider]} User`,
-        email: user?.email,
+        email: authUser?.email,
       });
       await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
       router.replace('/request/location');
     } catch {
-      Alert.alert('Sign up failed', 'Please try again.');
+      Alert.alert('Sign in failed', 'Please try again.');
     } finally {
       setIsLoading(null);
     }
   };
 
-  const handleEmailMagicLink = async () => {
-    if (!supabase || !hasSupabaseConfig) {
-      Alert.alert(
-        'Supabase not configured',
-        'Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your environment.'
-      );
-      return;
-    }
-
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      Alert.alert('Invalid email', 'Enter a valid email to receive your sign-in link.');
-      return;
-    }
-
-    setIsEmailLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: trimmedEmail,
-        options: {
-          emailRedirectTo: redirectTo,
-          shouldCreateUser: false,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      Alert.alert('Check your email', 'We sent a magic link to finish sign in.');
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : '';
-      if (message.includes('user') && message.includes('not')) {
-        Alert.alert('No account found', 'Use "Sign up with Email" below to create a new account.');
-      } else {
-        Alert.alert('Unable to send link', 'Please try again in a moment.');
-      }
-    } finally {
-      setIsEmailLoading(false);
-    }
-  };
-
-  const handleEmailSignUp = async () => {
-    if (!supabase || !hasSupabaseConfig) {
-      Alert.alert(
-        'Supabase not configured',
-        'Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your environment.'
-      );
-      return;
-    }
-
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      Alert.alert('Invalid email', 'Enter a valid email to create your account.');
-      return;
-    }
-
-    setIsEmailLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: trimmedEmail,
-        options: {
-          emailRedirectTo: redirectTo,
-          shouldCreateUser: true,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      Alert.alert('Check your email', 'We sent a verification link to create your account.');
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : '';
-      if (message.includes('already') || message.includes('exists')) {
-        Alert.alert('Account already exists', 'Use "Continue with Email" to sign in.');
-      } else {
-        Alert.alert('Unable to sign up', 'Please try again in a moment.');
-      }
-    } finally {
-      setIsEmailLoading(false);
-    }
+  const openEmailPage = (mode: 'signin' | 'signup') => {
+    router.push({ pathname: '/(onboarding)/email-auth', params: { mode } } as any);
   };
 
   return (
@@ -220,7 +138,7 @@ export default function Slide4Screen() {
               <Text style={styles.badge}>ACCOUNT</Text>
               <Text style={styles.title}>Sign in to continue</Text>
               <Text style={styles.subtitle}>
-                Use Apple, Google, or email.
+                Choose Apple, Google, or continue with email.
               </Text>
             </View>
 
@@ -232,7 +150,7 @@ export default function Slide4Screen() {
                   (pressed || isLoading === 'apple') && styles.pressed,
                 ]}
                 onPress={() => completeSession('apple')}
-                disabled={isLoading !== null || isEmailLoading}
+                disabled={isLoading !== null}
               >
                 <Ionicons name="logo-apple" size={18} color="#FFFFFF" style={styles.oauthIcon} />
                 <Text style={styles.appleButtonText}>
@@ -247,7 +165,7 @@ export default function Slide4Screen() {
                   (pressed || isLoading === 'google') && styles.pressed,
                 ]}
                 onPress={() => completeSession('google')}
-                disabled={isLoading !== null || isEmailLoading}
+                disabled={isLoading !== null}
               >
                 <Ionicons name="logo-google" size={18} color="#111111" style={styles.oauthIcon} />
                 <Text style={styles.googleButtonText}>
@@ -261,41 +179,29 @@ export default function Slide4Screen() {
                 <View style={styles.dividerLine} />
               </View>
 
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                style={styles.emailInput}
-                editable={!isEmailLoading}
-              />
-
               <Pressable
                 style={({ pressed }) => [
                   styles.emailButton,
-                  (pressed || isEmailLoading) && styles.pressed,
+                  (pressed || isLoading !== null) && styles.pressed,
                 ]}
-                onPress={handleEmailMagicLink}
-                disabled={isEmailLoading || isLoading !== null}
+                onPress={() => openEmailPage('signin')}
+                disabled={isLoading !== null}
               >
-                <Text style={styles.emailButtonText}>
-                  {isEmailLoading ? 'Sending link...' : 'Continue with Email'}
-                </Text>
+                <Text style={styles.emailButtonText}>Continue with Email</Text>
               </Pressable>
 
               <Pressable
                 style={({ pressed }) => [
-                  styles.emailSecondaryTextWrap,
-                  (pressed || isEmailLoading) && styles.textPressed,
+                  styles.signupButton,
+                  (pressed || isLoading !== null) && styles.pressed,
                 ]}
-                onPress={handleEmailSignUp}
-                disabled={isEmailLoading || isLoading !== null}
+                onPress={() => openEmailPage('signup')}
+                disabled={isLoading !== null}
               >
-                <Text style={styles.emailSecondaryText}>Sign up with Email</Text>
+                <Text style={styles.signupButtonText}>Sign up with Email</Text>
               </Pressable>
+
+              <Text style={styles.emailHint}>Verification code entry opens on the next page.</Text>
             </View>
           </View>
 
@@ -429,16 +335,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  emailInput: {
-    minHeight: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    color: '#111827',
-    fontSize: 15,
-  },
   emailButton: {
     minHeight: 48,
     borderRadius: 12,
@@ -453,24 +349,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  emailSecondaryTextWrap: {
+  signupButton: {
+    minHeight: 46,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: ORANGE,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
   },
-  emailSecondaryText: {
+  signupButtonText: {
     color: ORANGE,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     textAlign: 'center',
-    textDecorationLine: 'underline',
+  },
+  emailHint: {
+    color: '#6B7280',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
-  },
-  textPressed: {
-    opacity: 0.7,
   },
   footnote: {
     marginTop: 2,

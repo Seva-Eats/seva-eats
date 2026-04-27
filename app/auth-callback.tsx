@@ -7,12 +7,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { useUser } from '@/context';
-import { completeAuthFromUrl } from '@/lib/supabase';
+import { completeAuthFromUrl, getCurrentSession } from '@/lib/supabase';
+
+function providerFromSession(session: Awaited<ReturnType<typeof getCurrentSession>>) {
+  const provider = session?.user.app_metadata?.provider;
+  if (provider === 'apple' || provider === 'google' || provider === 'email') {
+    return provider;
+  }
+  return 'email';
+}
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
   const incomingUrl = Linking.useURL();
-  const { user } = useUser();
+  const { mockSignIn } = useUser();
   const [status, setStatus] = useState<'loading' | 'done' | 'error'>('loading');
   const handledUrlRef = useRef<string | null>(null);
 
@@ -28,8 +36,21 @@ export default function AuthCallbackScreen() {
       try {
         const completed = await completeAuthFromUrl(url);
         if (!completed) throw new Error('Missing Supabase auth callback parameters');
+        const session = await getCurrentSession();
+        if (session?.user) {
+          await mockSignIn(providerFromSession(session), {
+            name:
+              typeof session.user.user_metadata?.full_name === 'string'
+                ? session.user.user_metadata.full_name
+                : session.user.email?.split('@')[0],
+            email: session.user.email,
+          });
+        }
         await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-        if (isMounted) setStatus('done');
+        if (isMounted) {
+          setStatus('done');
+          router.replace('/request/location');
+        }
       } catch {
         if (isMounted) setStatus('error');
       }
@@ -40,13 +61,7 @@ export default function AuthCallbackScreen() {
     return () => {
       isMounted = false;
     };
-  }, [incomingUrl]);
-
-  useEffect(() => {
-    if (status === 'done' && user?.isAuthenticated) {
-      router.replace('/request/location');
-    }
-  }, [router, status, user?.isAuthenticated]);
+  }, [incomingUrl, mockSignIn, router]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>

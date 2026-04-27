@@ -26,9 +26,8 @@ export async function getCurrentSession() {
 
 type OtpType = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email' | 'email_change';
 
-function parseHashParams(urlString: string) {
-  const hash = new URL(urlString).hash;
-  const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+function parseHashParams(hashValue: string) {
+  const raw = hashValue.startsWith('#') ? hashValue.slice(1) : hashValue;
   return new URLSearchParams(raw);
 }
 
@@ -49,18 +48,56 @@ function normalizeOtpType(value: string | null): OtpType | null {
 export async function completeAuthFromUrl(urlString: string) {
   if (!supabase) return false;
 
-  const url = new URL(urlString);
-  const hashParams = parseHashParams(urlString);
+  const queue = [urlString, decodeURIComponent(urlString)];
+  const seen = new Set<string>();
+  const paramsList: URLSearchParams[] = [];
 
-  const code = url.searchParams.get('code') ?? hashParams.get('code');
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || seen.has(current)) {
+      continue;
+    }
+    seen.add(current);
+
+    let parsed: URL;
+    try {
+      parsed = new URL(current);
+    } catch {
+      continue;
+    }
+
+    paramsList.push(parsed.searchParams);
+
+    const hashParams = parseHashParams(parsed.hash);
+    if (hashParams.toString().length > 0) {
+      paramsList.push(hashParams);
+    }
+
+    for (const key of ['redirect_to', 'redirectTo', 'next', 'redirect_url', 'redirectUrl']) {
+      const nested = parsed.searchParams.get(key) ?? hashParams.get(key);
+      if (nested && nested.includes('://')) {
+        queue.push(nested);
+      }
+    }
+  }
+
+  const getParam = (key: string) => {
+    for (const params of paramsList) {
+      const value = params.get(key);
+      if (value) return value;
+    }
+    return null;
+  };
+
+  const code = getParam('code');
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) throw error;
     return true;
   }
 
-  const accessToken = url.searchParams.get('access_token') ?? hashParams.get('access_token');
-  const refreshToken = url.searchParams.get('refresh_token') ?? hashParams.get('refresh_token');
+  const accessToken = getParam('access_token');
+  const refreshToken = getParam('refresh_token');
   if (accessToken && refreshToken) {
     const { error } = await supabase.auth.setSession({
       access_token: accessToken,
@@ -70,10 +107,8 @@ export async function completeAuthFromUrl(urlString: string) {
     return true;
   }
 
-  const tokenHash = url.searchParams.get('token_hash') ?? hashParams.get('token_hash');
-  const otpType = normalizeOtpType(
-    url.searchParams.get('type') ?? hashParams.get('type')
-  );
+  const tokenHash = getParam('token_hash');
+  const otpType = normalizeOtpType(getParam('type'));
   if (tokenHash && otpType) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
