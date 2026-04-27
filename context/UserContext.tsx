@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { AUTH_STORAGE_FLAG_KEY } from '@/constants/auth';
+import { upsertRecipientProfile } from '@/lib/backend/user';
 import { getCurrentSession, supabase } from '@/lib/supabase';
 
 const USER_STORAGE_KEY = 'user-profile';
@@ -71,6 +73,24 @@ const normalizeUser = (stored: Partial<UserProfile> & { familySize?: number; rol
   };
 };
 
+const getProviderFromSession = (session: Session | null): Exclude<AuthProvider, null> | null => {
+  if (!session) return null;
+  const provider = session.user.app_metadata?.provider;
+  if (provider === 'apple' || provider === 'google' || provider === 'email') {
+    return provider;
+  }
+  return 'email';
+};
+
+const getPreferredName = (session: Session | null, fallback?: string) => {
+  if (!session) return fallback ?? '';
+  const metadataName = session.user.user_metadata?.full_name;
+  if (typeof metadataName === 'string' && metadataName.trim().length > 0) {
+    return metadataName;
+  }
+  return fallback ?? '';
+};
+
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -82,24 +102,68 @@ export function UserProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
+  useEffect(() => {
+    if (!supabase) return;
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const provider = getProviderFromSession(session);
+      const email = session?.user.email;
+
+      setUser((prev) => {
+        const base = prev ?? defaultUser;
+        const nextUser: UserProfile = {
+          ...base,
+          isAuthenticated: !!session,
+          authProvider: provider,
+          email: email ?? base.email,
+          name: getPreferredName(session, base.name),
+        };
+        AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser)).catch(console.error);
+        if (session) {
+          AsyncStorage.setItem(AUTH_STORAGE_FLAG_KEY, 'true').catch(console.error);
+        } else {
+          AsyncStorage.removeItem(AUTH_STORAGE_FLAG_KEY).catch(console.error);
+        }
+        return nextUser;
+      });
+
+      if (session) {
+        const profileName = getPreferredName(session, '').trim() || 'Community Member';
+        upsertRecipientProfile({
+          fullName: profileName,
+        }).catch(console.error);
+      }
+    });
+
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
   const loadUser = async () => {
     try {
       const session = await getCurrentSession();
       const stored = await AsyncStorage.getItem(USER_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        const provider = getProviderFromSession(session);
         const normalized = normalizeUser({
           ...parsed,
           isAuthenticated: session ? true : parsed.isAuthenticated,
-          authProvider: session ? (parsed.authProvider ?? 'google') : parsed.authProvider,
+          authProvider: session ? (provider ?? parsed.authProvider ?? 'email') : parsed.authProvider,
+          email: session?.user.email ?? parsed.email,
+          name: getPreferredName(session, parsed.name),
         });
         setUser(normalized);
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
       } else {
+        const provider = getProviderFromSession(session);
         const seedUser = {
           ...defaultUser,
           isAuthenticated: !!session,
-          authProvider: session ? 'google' : null,
+          authProvider: provider,
+          email: session?.user.email,
+          name: getPreferredName(session, ''),
         };
         setUser(seedUser);
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(seedUser));

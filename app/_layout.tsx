@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -10,6 +11,7 @@ import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { ThemeProvider as CustomThemeProvider, LocationProvider, RequestProvider, UserProvider, useUser } from '@/context';
 import { useTheme } from '@/context/ThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { completeAuthFromUrl } from '@/lib/supabase';
 import { configureNotificationsAsync } from '@/utils/notifications';
 
 export const unstable_settings = {
@@ -76,17 +78,57 @@ function RootLayoutContent() {
   }, [segmentKey, isReady, refreshOnboarding]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const processIncomingAuthUrl = async (incomingUrl: string) => {
+      try {
+        const completed = await completeAuthFromUrl(incomingUrl);
+        if (!completed || !isMounted) return;
+        await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      } catch {
+        // no-op
+      }
+    };
+
+    Linking.getInitialURL().then((initialUrl) => {
+      if (initialUrl) {
+        void processIncomingAuthUrl(initialUrl);
+      }
+    }).catch(() => undefined);
+
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      void processIncomingAuthUrl(url);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isReady || hasOnboarded === null) return;
     const currentSegment = segments[0] as string | undefined;
     const inOnboarding = currentSegment === '(onboarding)';
     const isAuthenticated = !!user?.isAuthenticated;
+    const onOnboardingRoot = inOnboarding && segments.length <= 1;
 
     if (!hasOnboarded && !inOnboarding) {
       router.replace('/(onboarding)');
       return;
     }
 
+    if (!hasOnboarded && onOnboardingRoot && !isAuthenticated) {
+      router.replace('/(onboarding)/slide1');
+      return;
+    }
+
     if (hasOnboarded && !isAuthenticated && currentSegment !== '(onboarding)') {
+      router.replace('/(onboarding)/slide4' as any);
+      return;
+    }
+
+    if (hasOnboarded && !isAuthenticated && onOnboardingRoot) {
       router.replace('/(onboarding)/slide4' as any);
       return;
     }

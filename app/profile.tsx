@@ -250,6 +250,8 @@ export default function ProfileScreen() {
                 <Text style={[styles.authValue, { color: colors.text }]}>{user?.email || 'Not provided'}</Text>
               </View>
 
+              <Text style={[styles.authHint, { color: colors.mutedText }]}>Manage your account by signing out and choosing a different sign-in method in onboarding.</Text>
+
               {user?.isAuthenticated ? (
                 <Pressable style={styles.authButton} onPress={handleSignOut}>
                   <MaterialIcons name="logout" size={18} color="#DC2626" />
@@ -403,6 +405,11 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 14,
     fontWeight: '600',
+  },
+  authHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: Spacing.xs,
   },
   authPrimaryButton: {
     marginTop: Spacing.xs,

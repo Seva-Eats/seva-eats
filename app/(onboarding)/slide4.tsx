@@ -1,11 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import ProgressDots from '@/components/onboarding/ProgressDots';
@@ -26,10 +25,18 @@ const providerName: Record<OAuthProvider, string> = {
 
 export default function Slide4Screen() {
   const router = useRouter();
-  const { mockSignIn, clearProfile } = useUser();
+  const { mockSignIn, user } = useUser();
   const [isLoading, setIsLoading] = useState<OAuthProvider | null>(null);
+  const [email, setEmail] = useState('');
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
 
   const redirectTo = useMemo(() => Linking.createURL('/request/location'), []);
+
+  useEffect(() => {
+    if (user?.isAuthenticated) {
+      router.replace('/request/location');
+    }
+  }, [router, user?.isAuthenticated]);
 
   const completeSession = async (provider: OAuthProvider) => {
     if (!supabase || !hasSupabaseConfig) {
@@ -39,8 +46,6 @@ export default function Slide4Screen() {
       );
       return;
     }
-
-    await clearProfile();
 
     setIsLoading(provider);
 
@@ -93,73 +98,190 @@ export default function Slide4Screen() {
     }
   };
 
+  const handleEmailMagicLink = async () => {
+    if (!supabase || !hasSupabaseConfig) {
+      Alert.alert(
+        'Supabase not configured',
+        'Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your environment.'
+      );
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      Alert.alert('Invalid email', 'Enter a valid email to receive your sign-in link.');
+      return;
+    }
+
+    setIsEmailLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: false,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      Alert.alert('Check your email', 'We sent a magic link to finish sign in.');
+    } catch {
+      Alert.alert('Unable to send link', 'Please try again in a moment.');
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  const handleEmailSignUp = async () => {
+    if (!supabase || !hasSupabaseConfig) {
+      Alert.alert(
+        'Supabase not configured',
+        'Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your environment.'
+      );
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      Alert.alert('Invalid email', 'Enter a valid email to create your account.');
+      return;
+    }
+
+    setIsEmailLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: true,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      Alert.alert('Check your email', 'We sent a verification link to create your account.');
+    } catch {
+      Alert.alert('Unable to sign up', 'Please try again in a moment.');
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScrollView
-        style={styles.container}
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboard}
       >
-        <View style={styles.nav}>
-          <View style={styles.navSpacer} />
-          <ProgressDots total={4} current={3} />
-          <View style={styles.navSpacer} />
-        </View>
-
-        <View style={styles.hero}>
-          <View style={styles.logoBadge}>
-            <Image
-              source={require('@/assets/images/logo.png')}
-              style={styles.logo}
-              contentFit="contain"
-              accessibilityLabel="Seva Eats logo"
-            />
+        <ScrollView
+          style={styles.container}
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.nav}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={20} color={ORANGE} />
+              <Text style={styles.backText}>Back</Text>
+            </Pressable>
+            <ProgressDots total={4} current={3} />
+            <View style={styles.navSpacer} />
           </View>
-          <Text style={styles.badge}>ACCOUNT</Text>
-          <Text style={styles.title}>Create your account</Text>
-          <Text style={styles.subtitle}>
-            Continue with Apple or Google. If your account already exists, you will be signed in.
+
+          <View style={styles.main}>
+            <View style={styles.hero}>
+              <Text style={styles.badge}>ACCOUNT</Text>
+              <Text style={styles.title}>Sign in to continue</Text>
+              <Text style={styles.subtitle}>
+                Use Apple, Google, or email.
+              </Text>
+            </View>
+
+            <View style={styles.card}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.oauthButton,
+                  styles.appleButton,
+                  (pressed || isLoading === 'apple') && styles.pressed,
+                ]}
+                onPress={() => completeSession('apple')}
+                disabled={isLoading !== null || isEmailLoading}
+              >
+                <Ionicons name="logo-apple" size={18} color="#FFFFFF" style={styles.oauthIcon} />
+                <Text style={styles.appleButtonText}>
+                  {isLoading === 'apple' ? 'Please wait...' : 'Continue with Apple'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.oauthButton,
+                  styles.googleButton,
+                  (pressed || isLoading === 'google') && styles.pressed,
+                ]}
+                onPress={() => completeSession('google')}
+                disabled={isLoading !== null || isEmailLoading}
+              >
+                <Ionicons name="logo-google" size={18} color="#111111" style={styles.oauthIcon} />
+                <Text style={styles.googleButtonText}>
+                  {isLoading === 'google' ? 'Please wait...' : 'Continue with Google'}
+                </Text>
+              </Pressable>
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or email</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                style={styles.emailInput}
+                editable={!isEmailLoading}
+              />
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.emailButton,
+                  (pressed || isEmailLoading) && styles.pressed,
+                ]}
+                onPress={handleEmailMagicLink}
+                disabled={isEmailLoading || isLoading !== null}
+              >
+                <Text style={styles.emailButtonText}>
+                  {isEmailLoading ? 'Sending link...' : 'Continue with Email'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.emailSecondaryButton,
+                  (pressed || isEmailLoading) && styles.pressed,
+                ]}
+                onPress={handleEmailSignUp}
+                disabled={isEmailLoading || isLoading !== null}
+              >
+                <Text style={styles.emailSecondaryButtonText}>Sign up with Email</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <Text style={styles.footnote}>
+            By continuing, you agree to use Seva Eats respectfully and follow local community guidelines.
           </Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Continue with</Text>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.oauthButton,
-              styles.appleButton,
-              (pressed || isLoading === 'apple') && styles.pressed,
-            ]}
-            onPress={() => completeSession('apple')}
-            disabled={isLoading !== null}
-          >
-            <Ionicons name="logo-apple" size={18} color="#FFFFFF" style={styles.oauthIcon} />
-            <Text style={styles.appleButtonText}>
-              {isLoading === 'apple' ? 'Please wait...' : 'Continue with Apple'}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.oauthButton,
-              styles.googleButton,
-              (pressed || isLoading === 'google') && styles.pressed,
-            ]}
-            onPress={() => completeSession('google')}
-            disabled={isLoading !== null}
-          >
-            <Ionicons name="logo-google" size={18} color="#111111" style={styles.oauthIcon} />
-            <Text style={styles.googleButtonText}>
-              {isLoading === 'google' ? 'Please wait...' : 'Continue with Google'}
-            </Text>
-          </Pressable>
-        </View>
-
-        <Text style={styles.footnote}>
-          By continuing, you agree to use Seva Eats respectfully and follow local community guidelines.
-        </Text>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -169,14 +291,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: ONBOARDING_COLORS.background,
   },
+  keyboard: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
   content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 12,
+    paddingTop: 8,
     paddingBottom: 24,
-    gap: 20,
+    gap: 16,
   },
   nav: {
     flexDirection: 'row',
@@ -186,79 +312,69 @@ const styles = StyleSheet.create({
   navSpacer: {
     width: 40,
   },
-  hero: {
-    gap: 10,
+  backButton: {
+    minWidth: 56,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 2,
   },
-  logoBadge: {
-    width: 84,
-    height: 84,
-    borderRadius: 22,
-    backgroundColor: '#FFF0DC',
-    alignItems: 'center',
+  backText: {
+    color: ORANGE,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  main: {
+    flex: 1,
     justifyContent: 'center',
-    shadowColor: '#F97316',
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
+    alignItems: 'center',
+    gap: 12,
   },
-  logo: {
-    width: 62,
-    height: 62,
+  hero: {
+    gap: 6,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 360,
   },
   badge: {
     color: ORANGE,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 1.2,
   },
   title: {
     color: '#1A1A1A',
-    fontSize: 36,
-    fontWeight: '800',
-    lineHeight: 42,
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 34,
     textAlign: 'center',
   },
   subtitle: {
     color: '#6B7280',
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
-    maxWidth: 340,
   },
   card: {
-    marginTop: 12,
-    borderRadius: 28,
-    backgroundColor: '#FFF7EF',
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 16,
+    backgroundColor: '#F7F4EF',
     borderWidth: 1,
-    borderColor: '#F2DCC5',
-    padding: 18,
-    gap: 16,
-    shadowColor: '#F97316',
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 12 },
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1F2937',
+    borderColor: '#E8E3DA',
+    padding: 14,
+    gap: 10,
   },
   oauthButton: {
-    minHeight: 60,
-    borderRadius: 32,
+    minHeight: 50,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 2,
     position: 'relative',
-    shadowColor: '#111111',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
   },
   appleButton: {
     backgroundColor: '#111111',
@@ -270,19 +386,77 @@ const styles = StyleSheet.create({
   },
   appleButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
   },
   googleButtonText: {
     color: '#111111',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
   },
   oauthIcon: {
     position: 'absolute',
     left: 18,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 2,
+  },
+  dividerLine: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    flex: 1,
+  },
+  dividerText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  emailInput: {
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    color: '#111827',
+    fontSize: 15,
+  },
+  emailButton: {
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: ORANGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  emailButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emailSecondaryButton: {
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F3C28B',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  emailSecondaryButtonText: {
+    color: ORANGE,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.9,
