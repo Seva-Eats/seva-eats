@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -31,10 +32,12 @@ export default function Slide4Screen() {
   const [email, setEmail] = useState('');
   const [isEmailLoading, setIsEmailLoading] = useState(false);
 
-  const redirectTo = useMemo(
-    () => Linking.createURL('auth-callback', { scheme: 'sevaeats' }),
-    []
-  );
+  const redirectTo = useMemo(() => {
+    if (Constants.appOwnership === 'expo') {
+      return Linking.createURL('auth-callback');
+    }
+    return 'sevaeats://auth-callback';
+  }, []);
 
   const handleBack = () => {
     if (router.canGoBack()) {

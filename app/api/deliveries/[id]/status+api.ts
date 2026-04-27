@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: Request, { id }: { id: string }) {
   try {
     const body = await request.json();
     const { status } = body;
@@ -15,10 +15,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const url = new URL(request.url);
-    const deliveryId = url.pathname.split('/').filter(Boolean)[2];
-
-    if (!deliveryId) {
+    if (!id) {
       return Response.json(
         { success: false, error: 'Delivery ID required' },
         { status: 400 }
@@ -28,7 +25,7 @@ export async function PATCH(request: Request) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const { data, error } = await supabase.rpc('update_delivery_status', {
-      p_delivery_id: deliveryId,
+      p_delivery_id: id,
       p_new_status: status,
     });
 

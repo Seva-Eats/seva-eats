@@ -1,7 +1,17 @@
 const { createClient } = window.supabase || {};
-const L = window.L;
 
 const config = window.DASHBOARD_CONFIG || {};
+const GOOGLE_MAP_STYLES = [
+  { elementType: 'geometry', stylers: [{ color: '#0b0b0b' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#000000' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
+  { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#171717' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#222222' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#202020' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#101010' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#040404' }] },
+];
 const state = {
   supabase: null,
   kitchens: [],
@@ -12,8 +22,10 @@ const state = {
   selectedDeliveryId: null,
   selectedKitchenId: null,
   selectedDriverId: null,
+  targetPoint: null,
   livePoint: null,
-  map: null,
+  googleMapsPromise: null,
+  googleMap: null,
   liveMarker: null,
   targetMarker: null,
   routeLine: null,
@@ -75,8 +87,180 @@ function getDeliveryPoint(order) {
   return getOrderPoint(order);
 }
 
-if (!L) {
-  throw new Error('Leaflet failed to load.');
+function getMapCenter() {
+  return {
+    lat: Number(config.defaultCenter?.lat ?? 43.7315),
+    lng: Number(config.defaultCenter?.lng ?? -79.7624),
+  };
+}
+
+function formatPoint(point) {
+  return `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`;
+}
+
+function loadGoogleMapsApi() {
+  if (window.google?.maps) {
+    return Promise.resolve(window.google.maps);
+  }
+
+  if (state.googleMapsPromise) {
+    return state.googleMapsPromise;
+  }
+
+  if (!config.googleMapsApiKey || config.googleMapsApiKey.includes('YOUR_GOOGLE_MAPS_API_KEY')) {
+    return Promise.reject(new Error('Set dashboard/config.js with a Google Maps API key.'));
+  }
+
+  state.googleMapsPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(config.googleMapsApiKey)}&v=weekly`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.google.maps);
+    script.onerror = () => reject(new Error('Google Maps failed to load.'));
+    document.head.appendChild(script);
+  });
+
+  return state.googleMapsPromise;
+}
+
+function createGoogleMap() {
+  const center = getMapCenter();
+  els.map.textContent = '';
+  state.googleMap = new window.google.maps.Map(els.map, {
+    center,
+    zoom: Number(config.defaultZoom ?? 13),
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    clickableIcons: false,
+    gestureHandling: 'greedy',
+    disableDefaultUI: true,
+    backgroundColor: '#050505',
+    styles: GOOGLE_MAP_STYLES,
+  });
+
+  state.googleMap.addListener('click', (event) => {
+    if (!event.latLng) return;
+    const point = {
+      lat: event.latLng.lat(),
+      lng: event.latLng.lng(),
+    };
+    updateMapFocus(point, 'Live location updated');
+  });
+
+  window.google.maps.event.addListenerOnce(state.googleMap, 'idle', () => {
+    state.googleMap.setCenter(center);
+  });
+
+  state.liveMarker = new window.google.maps.Marker({
+    map: state.googleMap,
+    position: center,
+    draggable: true,
+    title: 'Live location',
+    icon: {
+      path: window.google.maps.SymbolPath.CIRCLE,
+      scale: 9,
+      fillColor: '#ffffff',
+      fillOpacity: 1,
+      strokeColor: '#000000',
+      strokeWeight: 2,
+    },
+  });
+
+  state.targetMarker = new window.google.maps.Marker({
+    map: state.googleMap,
+    position: center,
+    draggable: false,
+    title: 'Target location',
+    icon: {
+      path: window.google.maps.SymbolPath.CIRCLE,
+      scale: 9,
+      fillColor: '#000000',
+      fillOpacity: 0,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+    },
+  });
+
+  state.routeLine = new window.google.maps.Polyline({
+    map: state.googleMap,
+    path: [center, center],
+    strokeColor: '#ffffff',
+    strokeOpacity: 0.9,
+    strokeWeight: 2,
+    icons: [
+      {
+        icon: {
+          path: 'M 0,-1 0,1',
+          strokeOpacity: 1,
+          scale: 3,
+        },
+        offset: '0',
+        repeat: '14px',
+      },
+    ],
+  });
+
+  state.liveMarker.addListener('dragend', () => {
+    const position = state.liveMarker.getPosition();
+    if (!position) return;
+    updateMapFocus(
+      { lat: position.lat(), lng: position.lng() },
+      'Live location updated'
+    );
+  });
+
+  renderMap();
+}
+
+function renderMap() {
+  if (!state.googleMap) return;
+
+  if (state.livePoint && state.liveMarker) {
+    state.liveMarker.setPosition(state.livePoint);
+    els.liveLat.value = state.livePoint.lat.toFixed(6);
+    els.liveLng.value = state.livePoint.lng.toFixed(6);
+  }
+
+  if (state.targetPoint && state.targetMarker) {
+    state.targetMarker.setPosition(state.targetPoint);
+  }
+
+  if (state.livePoint && state.targetPoint && state.routeLine) {
+    state.routeLine.setPath([state.livePoint, state.targetPoint]);
+  }
+
+  if (state.livePoint) {
+    els.locationSummary.textContent = formatPoint(state.livePoint);
+  }
+}
+
+function applyMapPoint(point, label) {
+  state.livePoint = point;
+  if (state.googleMap) {
+    state.googleMap.setCenter(point);
+  }
+  els.liveLat.value = point.lat.toFixed(6);
+  els.liveLng.value = point.lng.toFixed(6);
+  els.locationSummary.textContent = label || formatPoint(point);
+  renderMap();
+}
+
+function setTargetPoint(point, label) {
+  state.targetPoint = point;
+  if (label) {
+    els.locationSummary.textContent = label;
+  }
+  if (state.googleMap) {
+    const bounds = new window.google.maps.LatLngBounds();
+    if (state.livePoint) bounds.extend(state.livePoint);
+    bounds.extend(point);
+    if (!bounds.isEmpty()) {
+      state.googleMap.fitBounds(bounds, 64);
+    }
+  }
+  renderMap();
 }
 
 function ensureSupabase() {
@@ -97,75 +281,32 @@ function ensureSupabase() {
 }
 
 function updateMapFocus(point, label) {
-  if (!state.map || !point) return;
-  state.livePoint = point;
-  els.liveLat.value = point.lat.toFixed(6);
-  els.liveLng.value = point.lng.toFixed(6);
-  els.locationSummary.textContent = label || `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`;
-
-  if (!state.liveMarker) {
-    state.liveMarker = L.marker([point.lat, point.lng], {
-      draggable: true,
-      title: 'Live location',
-    }).addTo(state.map);
-    state.liveMarker.on('dragend', () => {
-      const next = state.liveMarker.getLatLng();
-      updateMapFocus({ lat: next.lat, lng: next.lng }, 'Live location updated');
-    });
-  } else {
-    state.liveMarker.setLatLng([point.lat, point.lng]);
-  }
+  if (!state.googleMap || !point) return;
+  applyMapPoint(point, label || formatPoint(point));
 }
 
 function updateTarget(point, label) {
-  if (!state.map || !point) {
+  if (!state.googleMap || !point) {
     return;
   }
 
-  if (!state.targetMarker) {
-    state.targetMarker = L.marker([point.lat, point.lng], {
-      title: 'Selected destination',
-    }).addTo(state.map);
-  } else {
-    state.targetMarker.setLatLng([point.lat, point.lng]);
-  }
-
-  state.targetMarker.bindPopup(label || 'Selected destination');
-
-  if (state.routeLine) {
-    state.routeLine.remove();
-  }
-  if (state.liveMarker) {
-    state.routeLine = L.polyline(
-      [state.liveMarker.getLatLng(), [point.lat, point.lng]],
-      {
-        color: '#ffb547',
-        weight: 4,
-        opacity: 0.9,
-        dashArray: '10 10',
-      }
-    ).addTo(state.map);
-    state.map.fitBounds(state.routeLine.getBounds().pad(0.15));
-  }
+  setTargetPoint(point, label || 'Selected destination');
 }
 
-function initMap() {
-  const center = [config.defaultCenter?.lat ?? 43.7315, config.defaultCenter?.lng ?? -79.7624];
-  state.map = L.map('map', {
-    zoomControl: true,
-  }).setView(center, config.defaultZoom ?? 13);
+async function initMap() {
+  els.map.innerHTML = '<div class="map-loading">Loading map...</div>';
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors',
-  }).addTo(state.map);
-
-  const initial = { lat: center[0], lng: center[1] };
-  updateMapFocus(initial, 'Default live location');
-
-  state.map.on('click', (event) => {
-    updateMapFocus({ lat: event.latlng.lat, lng: event.latlng.lng }, 'Map click moved live location');
-  });
+  try {
+    await loadGoogleMapsApi();
+    createGoogleMap();
+    const center = getMapCenter();
+    updateMapFocus(center, 'Default live location');
+  } catch (error) {
+    els.map.innerHTML = '<div class="map-loading error">Set a Google Maps API key in dashboard/config.js.</div>';
+    setConnectionState('Map unavailable');
+    log(error.message || 'Map failed to load');
+    throw error;
+  }
 }
 
 async function loadReferenceData() {
@@ -555,7 +696,7 @@ function wireEvents() {
 }
 
 async function boot() {
-  initMap();
+  await initMap();
   wireEvents();
   ensureSupabase();
   await loadReferenceData();

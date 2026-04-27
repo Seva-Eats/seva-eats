@@ -7,7 +7,6 @@ export async function GET() {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Get active deliveries (assigned, picked_up, in_transit)
     const { data, error } = await supabase
       .from('deliveries')
       .select(

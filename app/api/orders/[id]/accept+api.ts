@@ -3,12 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export async function GET(request: Request) {
+export async function POST(request: Request, { id }: { id: string }) {
   try {
-    const url = new URL(request.url);
-    const orderId = url.pathname.split('/').filter(Boolean).pop();
+    const body = await request.json();
+    const { kitchenId, driverId } = body;
 
-    if (!orderId) {
+    if (!kitchenId) {
+      return Response.json(
+        { success: false, error: 'Kitchen ID required' },
+        { status: 400 }
+      );
+    }
+
+    if (!id) {
       return Response.json(
         { success: false, error: 'Order ID required' },
         { status: 400 }
@@ -17,16 +24,16 @@ export async function GET(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .single();
+    const { data, error } = await supabase.rpc('accept_order_and_assign_driver', {
+      p_order_id: id,
+      p_kitchen_id: kitchenId,
+      p_driver_id: driverId || null,
+    });
 
     if (error) {
       return Response.json(
         { success: false, error: error.message },
-        { status: 404 }
+        { status: 400 }
       );
     }
 
