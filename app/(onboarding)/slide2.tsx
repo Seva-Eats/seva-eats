@@ -18,7 +18,7 @@ export default function Slide2Screen() {
 
   const skip = async () => {
     await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/(tabs)');
+    router.replace('/(onboarding)/slide3');
   };
 
   return (

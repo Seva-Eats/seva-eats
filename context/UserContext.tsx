@@ -1,13 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { AUTH_STORAGE_FLAG_KEY } from '@/constants/auth';
+
 const USER_STORAGE_KEY = 'user-profile';
 
 export type UserRole = 'recipient' | 'dasher';
+export type AuthProvider = 'google' | 'apple' | 'email' | 'guest' | null;
 
 export type UserProfile = {
   id: string;
   name: string;
+  email?: string;
   phone: string;
   homeAddress: {
     address: string;
@@ -18,6 +22,8 @@ export type UserProfile = {
   servingSize: number;
   notificationsEnabled: boolean;
   role: UserRole;
+  isAuthenticated: boolean;
+  authProvider: AuthProvider;
 };
 
 type UserContextType = {
@@ -26,6 +32,8 @@ type UserContextType = {
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   setHomeAddress: (address: { address: string; latitude: number; longitude: number }) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
+  mockSignIn: (provider: Exclude<AuthProvider, null>, details?: { name?: string; email?: string }) => Promise<void>;
+  signOut: () => Promise<void>;
   clearProfile: () => Promise<void>;
   hasCompletedProfile: boolean;
 };
@@ -39,6 +47,8 @@ const defaultUser: UserProfile = {
   servingSize: 1,
   notificationsEnabled: true,
   role: 'recipient',
+  isAuthenticated: false,
+  authProvider: null,
 };
 
 const roleMap: Record<string, UserRole> = {
@@ -109,9 +119,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await updateProfile({ role });
   }, [updateProfile]);
 
+  const mockSignIn = useCallback(async (
+    provider: Exclude<AuthProvider, null>,
+    details?: { name?: string; email?: string }
+  ) => {
+    setUser((prev) => {
+      const base = prev ?? defaultUser;
+      const updated: UserProfile = {
+        ...base,
+        name: details?.name ?? base.name,
+        email: details?.email ?? base.email,
+        isAuthenticated: true,
+        authProvider: provider,
+      };
+      AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated)).catch(console.error);
+      AsyncStorage.setItem(AUTH_STORAGE_FLAG_KEY, 'true').catch(console.error);
+      return updated;
+    });
+  }, []);
+
+  const signOut = useCallback(async () => {
+    setUser((prev) => {
+      const base = prev ?? defaultUser;
+      const updated: UserProfile = {
+        ...base,
+        isAuthenticated: false,
+        authProvider: null,
+      };
+      AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated)).catch(console.error);
+      AsyncStorage.removeItem(AUTH_STORAGE_FLAG_KEY).catch(console.error);
+      return updated;
+    });
+  }, []);
+
   const clearProfile = useCallback(async () => {
     setUser(defaultUser);
     await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(defaultUser));
+    await AsyncStorage.removeItem(AUTH_STORAGE_FLAG_KEY);
   }, []);
 
   const hasCompletedProfile = useMemo(() => {
@@ -126,10 +170,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
       updateProfile,
       setHomeAddress,
       setRole,
+      mockSignIn,
+      signOut,
       clearProfile,
       hasCompletedProfile,
     }),
-    [user, isLoading, updateProfile, setHomeAddress, setRole, clearProfile, hasCompletedProfile]
+    [
+      user,
+      isLoading,
+      updateProfile,
+      setHomeAddress,
+      setRole,
+      mockSignIn,
+      signOut,
+      clearProfile,
+      hasCompletedProfile,
+    ]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

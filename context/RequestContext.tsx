@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { notifyMealDelivered } from '@/utils/notifications';
+import { notifyMealDelivered, notifyRequestStatusUpdate } from '@/utils/notifications';
 
 const REQUESTS_STORAGE_KEY = 'meal-requests';
 
@@ -171,6 +171,8 @@ export function RequestProvider({ children }: { children: ReactNode }) {
     const matchDelay = 5000 + Math.random() * 5000;
 
     setTimeout(() => {
+      let matchedPayload: { requestId: string; status: 'matched'; deliveryAddress?: string } | null = null;
+
       setRequests((prev) => {
         const updated = prev.map((req) => {
           if (req.id !== requestId || req.status !== 'pending') return req;
@@ -197,15 +199,26 @@ export function RequestProvider({ children }: { children: ReactNode }) {
                address: '123 Community Way, Brampton, ON',
                latitude: 43.7315,
                longitude: -79.7624,
-             },
-            estimatedDelivery,
-            statusHistory: [...req.statusHistory, { status: 'matched' as MealRequestStatus, timestamp: now }],
+              },
+             estimatedDelivery,
+             statusHistory: [...req.statusHistory, { status: 'matched' as MealRequestStatus, timestamp: now }],
+           };
+
+          matchedPayload = {
+            requestId: nextRequest.id,
+            status: 'matched',
+            deliveryAddress: nextRequest.deliveryAddress?.address,
           };
+
           return nextRequest;
         });
         saveRequests(updated);
         return updated;
       });
+
+      if (matchedPayload) {
+        void notifyRequestStatusUpdate(matchedPayload);
+      }
 
       // Continue simulation
       simulateDeliveryProgression(requestId);
@@ -221,7 +234,11 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
     statusProgression.forEach(({ status, delay }) => {
       setTimeout(() => {
-        let deliveredRequest: MealRequest | null = null;
+        let deliveredPayload: { requestId: string; deliveryAddress?: string } | null = null;
+        let statusPayload:
+          | { requestId: string; status: 'picked_up' | 'on_the_way'; deliveryAddress?: string }
+          | null = null;
+
         setRequests((prev) => {
           const updated = prev.map((req) => {
             if (req.id !== requestId) return req;
@@ -257,8 +274,19 @@ export function RequestProvider({ children }: { children: ReactNode }) {
               statusHistory: [...req.statusHistory, { status, timestamp: now }],
             };
 
+            if (status === 'picked_up' || status === 'on_the_way') {
+              statusPayload = {
+                requestId: nextRequest.id,
+                status,
+                deliveryAddress: nextRequest.deliveryAddress?.address,
+              };
+            }
+
             if (status === 'delivered') {
-              deliveredRequest = nextRequest;
+              deliveredPayload = {
+                requestId: nextRequest.id,
+                deliveryAddress: nextRequest.deliveryAddress?.address,
+              };
             }
             return nextRequest;
           });
@@ -266,11 +294,12 @@ export function RequestProvider({ children }: { children: ReactNode }) {
           return updated;
         });
 
-        if (deliveredRequest) {
-          void notifyMealDelivered({
-            requestId: deliveredRequest.id,
-            deliveryAddress: deliveredRequest.deliveryAddress?.address,
-          });
+        if (statusPayload) {
+          void notifyRequestStatusUpdate(statusPayload);
+        }
+
+        if (deliveredPayload) {
+          void notifyMealDelivered(deliveredPayload);
         }
       }, delay);
     });
@@ -303,7 +332,11 @@ export function RequestProvider({ children }: { children: ReactNode }) {
 
   const updateRequestStatus = useCallback(
     (requestId: string, status: MealRequestStatus, updates?: Partial<MealRequest>) => {
-      let deliveredRequest: MealRequest | null = null;
+      let deliveredPayload: { requestId: string; deliveryAddress?: string } | null = null;
+      let statusPayload:
+        | { requestId: string; status: 'matched' | 'picked_up' | 'on_the_way'; deliveryAddress?: string }
+        | null = null;
+
       setRequests((prev) => {
         const updated = prev.map((req) => {
           if (req.id !== requestId) return req;
@@ -315,8 +348,23 @@ export function RequestProvider({ children }: { children: ReactNode }) {
             statusHistory: [...req.statusHistory, { status, timestamp: now }],
           };
 
+          if (
+            status === 'matched' ||
+            status === 'picked_up' ||
+            status === 'on_the_way'
+          ) {
+            statusPayload = {
+              requestId: nextRequest.id,
+              status,
+              deliveryAddress: nextRequest.deliveryAddress?.address,
+            };
+          }
+
           if (status === 'delivered' && req.status !== 'delivered') {
-            deliveredRequest = nextRequest;
+            deliveredPayload = {
+              requestId: nextRequest.id,
+              deliveryAddress: nextRequest.deliveryAddress?.address,
+            };
           }
           return nextRequest;
         });
@@ -324,11 +372,12 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         return updated;
       });
 
-      if (deliveredRequest) {
-        void notifyMealDelivered({
-          requestId: deliveredRequest.id,
-          deliveryAddress: deliveredRequest.deliveryAddress?.address,
-        });
+      if (statusPayload) {
+        void notifyRequestStatusUpdate(statusPayload);
+      }
+
+      if (deliveredPayload) {
+        void notifyMealDelivered(deliveredPayload);
       }
     },
     [saveRequests]

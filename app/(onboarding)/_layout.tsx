@@ -7,8 +7,8 @@ export default function OnboardingLayout() {
         headerShown: false,
         animation: 'slide_from_right',
         animationDuration: 220,
-        fullScreenGestureEnabled: true,
-        gestureEnabled: true,
+        fullScreenGestureEnabled: false,
+        gestureEnabled: false,
       }}
     >
       <Stack.Screen name="index" />

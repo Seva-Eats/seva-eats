@@ -1,12 +1,18 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
+import { useUser } from '@/context';
+
+const MAX_NAME_LENGTH = 60;
+const MAX_EMAIL_LENGTH = 100;
+
+type AuthMode = 'sign-in' | 'sign-up';
 
 const STEPS = [
   {
@@ -32,38 +38,94 @@ const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide3Screen() {
   const router = useRouter();
+  const { mockSignIn } = useUser();
+  const [mode, setMode] = useState<AuthMode>('sign-in');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const finish = async () => {
-    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/request/location');
+  const modeTitle = useMemo(
+    () => (mode === 'sign-up' ? 'Create your Seva account' : 'Sign in to continue'),
+    [mode]
+  );
+
+  const modeSubtitle = useMemo(
+    () =>
+      mode === 'sign-up'
+        ? 'Join to request meals and track deliveries in real-time.'
+        : 'Pick a method below to get back to your request flow.',
+    [mode]
+  );
+
+  const completeAuth = async (provider: 'google' | 'apple' | 'email') => {
+    const trimmedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (provider === 'email') {
+      if (!normalizedEmail || !normalizedEmail.includes('@')) {
+        Alert.alert('Valid Email Required', 'Please enter a valid email address.');
+        return;
+      }
+      if (mode === 'sign-up' && !trimmedName) {
+        Alert.alert('Name Required', 'Please enter your full name to create your account.');
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    try {
+      await mockSignIn(provider, {
+        name:
+          provider === 'email'
+            ? mode === 'sign-up'
+              ? trimmedName
+              : trimmedName || 'Seva User'
+            : provider === 'google'
+              ? 'Google User'
+              : 'Apple User',
+        email:
+          provider === 'email'
+            ? normalizedEmail
+            : provider === 'google'
+              ? 'demo.google@sevaeats.app'
+              : 'demo.apple@privaterelay.appleid.com',
+      });
+
+      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      router.replace('/request/location');
+    } catch {
+      Alert.alert('Authentication Failed', 'Please try again in a moment.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Nav bar */}
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <View style={styles.navSpacer} />
           <ProgressDots total={3} current={2} />
-          <Pressable onPress={finish} hitSlop={12} style={styles.navBtn}>
-            <Text style={styles.skipText}>Skip</Text>
-          </Pressable>
+          <View style={styles.navSpacer} />
         </View>
 
-        {/* Body */}
-        <View style={styles.body}>
+        <View style={styles.hero}>
           <View style={styles.labelWrap}>
-            <Text style={styles.label}>SIMPLE PROCESS</Text>
+            <Text style={styles.label}>FINAL STEP</Text>
           </View>
 
           <Text style={styles.headline}>How It Works</Text>
-          <Text style={styles.subtitle}>Access nutritious meals in 3 easy steps</Text>
+          <Text style={styles.subtitle}>Access nutritious meals in 3 easy steps, then sign in.</Text>
 
-          {/* Steps */}
           <View style={styles.steps}>
             {STEPS.map((step, i) => (
               <View key={i} style={styles.stepRow}>
-                {/* Number + connector column */}
                 <View style={styles.stepLeft}>
                   <View style={styles.stepCircle}>
                     <Text style={styles.stepNum}>{`0${i + 1}`}</Text>
@@ -85,14 +147,82 @@ export default function Slide3Screen() {
           </View>
         </View>
 
-        {/* CTA */}
-        <Pressable
-          style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-          onPress={finish}
-        >
-          <Text style={styles.ctaText}>Next</Text>
-        </Pressable>
-      </View>
+        <View style={styles.authCard}>
+          <View style={styles.modeRow}>
+            <Pressable
+              style={[styles.modeButton, mode === 'sign-in' && styles.modeButtonActive]}
+              onPress={() => setMode('sign-in')}
+              disabled={isLoading}
+            >
+              <Text style={[styles.modeButtonText, mode === 'sign-in' && styles.modeButtonTextActive]}>
+                Sign in
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.modeButton, mode === 'sign-up' && styles.modeButtonActive]}
+              onPress={() => setMode('sign-up')}
+              disabled={isLoading}
+            >
+              <Text style={[styles.modeButtonText, mode === 'sign-up' && styles.modeButtonTextActive]}>
+                Sign up
+              </Text>
+            </Pressable>
+          </View>
+
+          <Text style={styles.authTitle}>{modeTitle}</Text>
+          <Text style={styles.authSubtitle}>{modeSubtitle}</Text>
+
+          {mode === 'sign-up' ? (
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={(value) => setName(value.slice(0, MAX_NAME_LENGTH))}
+              placeholder="Full name"
+              autoCapitalize="words"
+              editable={!isLoading}
+            />
+          ) : null}
+
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={(value) => setEmail(value.slice(0, MAX_EMAIL_LENGTH))}
+            placeholder="name@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            editable={!isLoading}
+          />
+
+          <Pressable
+            style={({ pressed }) => [styles.primaryButton, (pressed || isLoading) && styles.pressed]}
+            onPress={() => completeAuth('email')}
+            disabled={isLoading}
+          >
+            <Text style={styles.primaryButtonText}>
+              {isLoading ? 'Please wait...' : mode === 'sign-up' ? 'Create account with Email' : 'Continue with Email'}
+            </Text>
+          </Pressable>
+
+          <View style={styles.providerRow}>
+            <Pressable
+              style={({ pressed }) => [styles.providerButton, pressed && styles.pressed]}
+              onPress={() => completeAuth('google')}
+              disabled={isLoading}
+            >
+              <MaterialIcons name="account-circle" size={19} color={ORANGE} />
+              <Text style={styles.providerText}>Google</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.providerButton, pressed && styles.pressed]}
+              onPress={() => completeAuth('apple')}
+              disabled={isLoading}
+            >
+              <MaterialIcons name="apple" size={19} color={ORANGE} />
+              <Text style={styles.providerText}>Apple</Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -104,28 +234,23 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  content: {
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 28,
+    marginBottom: 20,
   },
-  navBtn: {
+  navSpacer: {
     width: 40,
-    alignItems: 'center',
   },
-  skipText: {
-    fontSize: 15,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  body: {
-    flex: 1,
-    gap: 16,
+  hero: {
+    gap: 12,
   },
   labelWrap: {
     alignSelf: 'center',
@@ -137,22 +262,23 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   headline: {
-    fontSize: 50,
+    fontSize: 40,
     fontWeight: '800',
     color: '#1A1A1A',
     letterSpacing: -0.8,
     textAlign: 'center',
-    lineHeight: 58,
+    lineHeight: 46,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 12,
+    lineHeight: 20,
+    marginBottom: 8,
   },
   steps: {
     gap: 0,
+    marginBottom: 14,
   },
   stepRow: {
     flexDirection: 'row',
@@ -206,7 +332,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepTextSpaced: {
-    marginBottom: 28,
+    marginBottom: 18,
   },
   stepTitle: {
     fontSize: 19,
@@ -216,31 +342,102 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   stepDesc: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 19,
     color: '#6B7280',
     marginLeft: 62,
   },
-  ctaBtn: {
-    height: CTA_BUTTON_HEIGHT,
-    backgroundColor: ORANGE,
-    borderRadius: CTA_BUTTON_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: ORANGE,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
+  authCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F3DBC3',
+    backgroundColor: '#FFF7EF',
+    padding: 14,
+    gap: 10,
   },
   pressed: {
     opacity: 0.88,
     transform: [{ scale: 0.985 }],
   },
-  ctaText: {
-    color: '#FFF',
+  modeRow: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    backgroundColor: '#F7E7D7',
+    padding: 4,
+    gap: 6,
+  },
+  modeButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 8,
+  },
+  modeButtonActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  modeButtonText: {
+    color: '#8B5E3C',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modeButtonTextActive: {
+    color: '#1D2321',
+  },
+  authTitle: {
+    color: '#1D2321',
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 0.3,
+  },
+  authSubtitle: {
+    color: '#6B7280',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E2D2C1',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#1D2321',
+    backgroundColor: '#FFFFFF',
+  },
+  primaryButton: {
+    marginTop: 2,
+    height: CTA_BUTTON_HEIGHT,
+    backgroundColor: ORANGE,
+    borderRadius: CTA_BUTTON_RADIUS,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 10,
+  },
+  providerRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  providerButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#F2CDAA',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 10,
+  },
+  providerText: {
+    color: '#1D2321',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

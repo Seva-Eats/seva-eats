@@ -1,4 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -16,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LocationPicker } from '@/components/location-picker';
 import { QuickActionCard } from '@/components/quick-action-card';
+import { AUTH_STORAGE_FLAG_KEY, AUTH_PROVIDER_LABELS } from '@/constants/auth';
+import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { Radii, Spacing } from '@/constants/theme';
 import { useLocation, useUser } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -35,7 +38,7 @@ const formatPhoneNumber = (value: string): string => {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, updateProfile, clearProfile } = useUser();
+  const { user, updateProfile, clearProfile, signOut } = useUser();
   const { userLocation } = useLocation();
   const colors = useThemeColors();
   
@@ -102,6 +105,28 @@ export default function ProfileScreen() {
       ]
     );
   };
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'You will need to sign in again to continue.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut();
+          await AsyncStorage.multiSet([
+            [AUTH_STORAGE_FLAG_KEY, 'false'],
+            [ONBOARDING_STORAGE_KEY, 'true'],
+          ]);
+          router.replace('/(onboarding)/slide3');
+        },
+      },
+    ]);
+  };
+
+  const authProviderLabel = user?.authProvider
+    ? AUTH_PROVIDER_LABELS[user.authProvider]
+    : 'Not signed in';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -206,6 +231,38 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/support' as any)}
                 testID="quick-action-help-support"
               />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Authentication</Text>
+            <View style={[styles.authCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={styles.authRow}>
+                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Status</Text>
+                <Text style={[styles.authValue, { color: colors.text }]}>{user?.isAuthenticated ? 'Signed in' : 'Signed out'}</Text>
+              </View>
+              <View style={styles.authRow}>
+                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Provider</Text>
+                <Text style={[styles.authValue, { color: colors.text }]}>{authProviderLabel}</Text>
+              </View>
+              <View style={styles.authRow}>
+                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Email</Text>
+                <Text style={[styles.authValue, { color: colors.text }]}>{user?.email || 'Not provided'}</Text>
+              </View>
+
+              {user?.isAuthenticated ? (
+                <Pressable style={styles.authButton} onPress={handleSignOut}>
+                  <MaterialIcons name="logout" size={18} color="#DC2626" />
+                  <Text style={styles.authButtonText}>Sign Out</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={[styles.authPrimaryButton, { backgroundColor: colors.accent }]}
+                  onPress={() => router.push('/(onboarding)/slide3')}
+                >
+                  <Text style={styles.authPrimaryButtonText}>Sign In</Text>
+                </Pressable>
+              )}
             </View>
           </View>
 
@@ -314,6 +371,50 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     rowGap: Spacing.md,
+  },
+  authCard: {
+    borderWidth: 1,
+    borderRadius: Radii.lg,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  authRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  authLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  authValue: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  authButton: {
+    marginTop: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+  },
+  authButtonText: {
+    color: '#DC2626',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  authPrimaryButton: {
+    marginTop: Spacing.xs,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  authPrimaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   saveButton: {
     borderRadius: Radii.pill,
