@@ -1,5 +1,4 @@
 import { ConfigPlugin, withPodfile, withXcodeProject } from 'expo/config-plugins';
-import * as path from 'path';
 
 /**
  * Expo Config Plugin for ActivityTracking (Dynamic Island)

@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { subscribeToDriverLocation } from '@/lib/backend/orders';
 import {
-  startDeliveryActivity,
-  updateDeliveryActivity,
-  endDeliveryActivity,
-  estimateArrivalMinutes,
-  type DeliveryActivityState,
+    endDeliveryActivity,
+    estimateArrivalMinutes,
+    startDeliveryActivity,
+    updateDeliveryActivity,
+    type DeliveryActivityState,
 } from '@/lib/activity-tracking';
+import { subscribeToDriverLocation } from '@/lib/backend/orders';
 
 interface UseDeliveryTrackingOptions {
   orderId: string;

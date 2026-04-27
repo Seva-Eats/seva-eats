@@ -24,8 +24,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radii, Shadows, Spacing } from '@/constants/theme';
 import { REQUEST_STATUS_LABELS, useRequests, type MealRequestStatus } from '@/context';
-import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useDeliveryTracking } from '@/hooks/use-delivery-tracking';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { generateDeliveryRoute, type Coordinate } from '@/lib/pathfinding';
 import {
     markTrackingNotificationsPrompted,
