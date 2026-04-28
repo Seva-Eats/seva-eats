@@ -49,11 +49,18 @@
           }
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
+        }
+      ],
       "expo-font",
       "expo-image",
       "expo-notifications",
-      "expo-web-browser",
-      "./plugins/with-activity-tracking"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

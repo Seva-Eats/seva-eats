@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
 import { ONBOARDING_COLORS, ONBOARDING_TOKENS } from '@/constants/onboarding';
-import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { hasSupabaseConfig, isNetworkTimeoutError, supabase } from '@/lib/supabase';
 
 const ORANGE = ONBOARDING_COLORS.accent;
 
@@ -51,16 +51,7 @@ export default function EmailAuthScreen() {
       });
 
       if (withRedirect.error) {
-        const withoutRedirect = await supabase.auth.signInWithOtp({
-          email: trimmedEmail,
-          options: {
-            shouldCreateUser: mode === 'signup',
-          },
-        });
-
-        if (withoutRedirect.error) {
-          throw withoutRedirect.error;
-        }
+        throw withRedirect.error;
       }
 
       router.push({
@@ -75,6 +66,13 @@ export default function EmailAuthScreen() {
       }
       if (mode === 'signup' && (message.includes('already') || message.includes('exists'))) {
         Alert.alert('Account already exists', 'Use Continue with Email from the previous page.');
+        return;
+      }
+      if (isNetworkTimeoutError(error)) {
+        Alert.alert(
+          'Network error',
+          'Could not reach the sign-in service. Check your connection, restart Expo, and try again.'
+        );
         return;
       }
       Alert.alert(

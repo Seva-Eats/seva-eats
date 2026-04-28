@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BackNavButton from '@/components/onboarding/BackNavButton';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 import { useUser } from '@/context';
-import { getCurrentSession, hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { getCurrentSession, hasSupabaseConfig, isNetworkTimeoutError, supabase } from '@/lib/supabase';
 
 const ORANGE = ONBOARDING_COLORS.accent;
 
@@ -126,20 +126,18 @@ export default function EmailVerifyScreen() {
       });
 
       if (withRedirect.error) {
-        const withoutRedirect = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            shouldCreateUser: mode === 'signup',
-          },
-        });
-
-        if (withoutRedirect.error) {
-          throw withoutRedirect.error;
-        }
+        throw withRedirect.error;
       }
 
       Alert.alert('Email sent', 'A fresh verification email has been sent.');
     } catch (error) {
+      if (isNetworkTimeoutError(error)) {
+        Alert.alert(
+          'Network error',
+          'Could not reach the sign-in service. Check your connection, restart Expo, and try again.'
+        );
+        return;
+      }
       Alert.alert(
         'Unable to resend',
         error instanceof Error && error.message ? error.message : 'Please try again in a moment.'

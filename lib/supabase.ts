@@ -24,6 +24,12 @@ export async function getCurrentSession() {
   return data.session ?? null;
 }
 
+export function isNetworkTimeoutError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const message = `${error.name} ${error.message}`.toLowerCase();
+  return message.includes('network request timed out') || message.includes('timed out');
+}
+
 type OtpType = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email' | 'email_change';
 
 function parseHashParams(hashValue: string) {

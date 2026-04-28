@@ -12,7 +12,7 @@ import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 import { useUser } from '@/context';
-import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { hasSupabaseConfig, isNetworkTimeoutError, supabase } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -104,7 +104,14 @@ export default function Slide4Screen() {
       });
       await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
       router.replace('/request/location');
-    } catch {
+    } catch (error) {
+      if (isNetworkTimeoutError(error)) {
+        Alert.alert(
+          'Network error',
+          'Could not reach the sign-in service. Check your connection, restart Expo, and try again.'
+        );
+        return;
+      }
       Alert.alert('Sign in failed', 'Please try again.');
     } finally {
       setIsLoading(null);
