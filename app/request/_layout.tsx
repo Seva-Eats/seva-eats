@@ -5,22 +5,23 @@ import { PanGestureHandler } from 'react-native-gesture-handler';
 import { SwipeProvider, useSwipeContext } from '../../hooks/use-swipe-context';
 import { useSwipeNavigation } from '../../hooks/use-swipe-navigation';
 
-function OnboardingStackContent() {
+function RequestStackContent() {
   const router = useRouter();
   const segments = useSegments();
   const { setTotalScreens, setCurrentIndex, canSwipeLeft, canSwipeRight } = useSwipeContext();
 
-  // Map route names to indices
+  // Map route names to indices for the request flow
+  // location (0) -> new (1) -> details (2) -> [id] (3)
   const screenMap: Record<string, number> = {
-    index: 0,
-    slide1: 1,
-    slide2: 2,
-    slide3: 3,
+    location: 0,
+    new: 1,
+    details: 2,
+    '[id]': 3,
   };
 
-  const currentScreen = segments[segments.length - 1] || 'index';
+  const currentScreen = segments[segments.length - 1] || 'location';
   const currentIndex = screenMap[currentScreen] ?? 0;
-  const totalScreens = Object.keys(screenMap).length;
+  const totalScreens = 4;
 
   // Update context when screen changes
   React.useEffect(() => {
@@ -30,28 +31,28 @@ function OnboardingStackContent() {
 
   const { onGestureEvent } = useSwipeNavigation({
     onSwipeLeft: () => {
-      // Navigate forward
+      // Navigate forward in request flow
       const nextRoutes: Record<number, string> = {
-        0: 'slide1',
-        1: 'slide2',
-        2: 'slide3',
+        0: 'new',
+        1: 'details',
+        2: '[id]',
       };
       const nextRoute = nextRoutes[currentIndex];
       if (nextRoute) {
-        router.push(nextRoute);
+        router.push(`/request/${nextRoute}`);
       }
     },
     onSwipeRight: () => {
-      // Navigate backward
-      if (currentIndex === 0) return; // Can't go back from first screen
+      // Navigate backward in request flow
+      if (currentIndex === 0) return;
       const prevRoutes: Record<number, string> = {
-        1: 'index',
-        2: 'slide1',
-        3: 'slide2',
+        1: 'location',
+        2: 'new',
+        3: 'details',
       };
       const prevRoute = prevRoutes[currentIndex];
       if (prevRoute) {
-        router.push(prevRoute);
+        router.push(`/request/${prevRoute}`);
       }
     },
     canSwipeLeft,
@@ -67,24 +68,24 @@ function OnboardingStackContent() {
             headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 220,
-            fullScreenGestureEnabled: false, // Disable native back gesture to avoid conflicts
+            fullScreenGestureEnabled: false,
             gestureEnabled: false,
           }}
         >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="slide1" />
-          <Stack.Screen name="slide2" />
-          <Stack.Screen name="slide3" />
+          <Stack.Screen name="location" />
+          <Stack.Screen name="new" />
+          <Stack.Screen name="details" />
+          <Stack.Screen name="[id]" />
         </Stack>
       </View>
     </PanGestureHandler>
   );
 }
 
-export default function OnboardingLayout() {
+export default function RequestLayout() {
   return (
     <SwipeProvider initialIndex={0} totalScreens={4}>
-      <OnboardingStackContent />
+      <RequestStackContent />
     </SwipeProvider>
   );
 }

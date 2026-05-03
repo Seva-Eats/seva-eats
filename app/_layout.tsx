@@ -37,23 +37,25 @@ function RootLayoutContent() {
     }
   }, []);
 
+  // Initialize onboarding state on mount
   useEffect(() => {
     refreshOnboarding();
-  }, [refreshOnboarding]);
+  }, []);
 
+  // Configure notifications
   useEffect(() => {
     void configureNotificationsAsync();
   }, []);
 
-  useEffect(() => {
-    if (!isReady) return;
-    refreshOnboarding();
-  }, [segments.join('/'), isReady, refreshOnboarding]);
-
+  // Handle navigation based on onboarding state
   useEffect(() => {
     if (!isReady || hasOnboarded === null) return;
+    
     const inOnboarding = segments[0] === '(onboarding)';
-    if (!hasOnboarded && !inOnboarding) {
+    const inRequestFlow = segments[0] === 'request' || segments[0] === 'requests';
+    
+    // Only redirect to onboarding if not onboarded AND not already in onboarding/request flows
+    if (!hasOnboarded && !inOnboarding && !inRequestFlow) {
       router.replace('/(onboarding)');
     }
   }, [isReady, hasOnboarded, segments, router]);
@@ -67,10 +69,9 @@ function RootLayoutContent() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="request/new" options={{ headerShown: false }} />
-        <Stack.Screen name="request/details" options={{ headerShown: false }} />
-        <Stack.Screen name="request/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="request" options={{ headerShown: false }} />
+        <Stack.Screen name="requests" options={{ headerShown: false }} />
         <Stack.Screen name="profile" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />

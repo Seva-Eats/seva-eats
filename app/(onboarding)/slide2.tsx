@@ -17,15 +17,21 @@ export default function Slide2Screen() {
   const router = useRouter();
 
   const skip = async () => {
-    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/(tabs)');
+    try {
+      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Failed to skip onboarding:', error);
+      router.replace('/(tabs)');
+    }
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <BackNavButton onPress={() => router.replace('/(onboarding)/slide1')} />
           <ProgressDots total={3} current={1} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>

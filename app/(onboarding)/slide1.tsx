@@ -4,12 +4,12 @@ import { useRouter } from 'expo-router';
 import { useEffect, type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
+    Easing,
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -60,8 +60,14 @@ export default function Slide1Screen() {
   }));
 
   const skip = async () => {
-    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/(tabs)');
+    try {
+      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Failed to skip onboarding:', error);
+      router.replace('/(tabs)');
+    }
   };
 
   return (
@@ -69,7 +75,7 @@ export default function Slide1Screen() {
       <View style={styles.container}>
         {/* Nav bar */}
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <BackNavButton onPress={() => router.replace('/(onboarding)')} />
           <ProgressDots total={3} current={0} />
           <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>

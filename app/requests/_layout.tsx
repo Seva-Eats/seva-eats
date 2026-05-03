@@ -5,22 +5,21 @@ import { PanGestureHandler } from 'react-native-gesture-handler';
 import { SwipeProvider, useSwipeContext } from '../../hooks/use-swipe-context';
 import { useSwipeNavigation } from '../../hooks/use-swipe-navigation';
 
-function OnboardingStackContent() {
+function RequestsStackContent() {
   const router = useRouter();
   const segments = useSegments();
   const { setTotalScreens, setCurrentIndex, canSwipeLeft, canSwipeRight } = useSwipeContext();
 
-  // Map route names to indices
+  // Map route names to indices for requests tabs
+  // active (0) <-> history (1)
   const screenMap: Record<string, number> = {
-    index: 0,
-    slide1: 1,
-    slide2: 2,
-    slide3: 3,
+    active: 0,
+    history: 1,
   };
 
-  const currentScreen = segments[segments.length - 1] || 'index';
+  const currentScreen = segments[segments.length - 1] || 'active';
   const currentIndex = screenMap[currentScreen] ?? 0;
-  const totalScreens = Object.keys(screenMap).length;
+  const totalScreens = 2;
 
   // Update context when screen changes
   React.useEffect(() => {
@@ -30,28 +29,15 @@ function OnboardingStackContent() {
 
   const { onGestureEvent } = useSwipeNavigation({
     onSwipeLeft: () => {
-      // Navigate forward
-      const nextRoutes: Record<number, string> = {
-        0: 'slide1',
-        1: 'slide2',
-        2: 'slide3',
-      };
-      const nextRoute = nextRoutes[currentIndex];
-      if (nextRoute) {
-        router.push(nextRoute);
+      // Navigate to history (right screen)
+      if (currentIndex === 0) {
+        router.push('/requests/history');
       }
     },
     onSwipeRight: () => {
-      // Navigate backward
-      if (currentIndex === 0) return; // Can't go back from first screen
-      const prevRoutes: Record<number, string> = {
-        1: 'index',
-        2: 'slide1',
-        3: 'slide2',
-      };
-      const prevRoute = prevRoutes[currentIndex];
-      if (prevRoute) {
-        router.push(prevRoute);
+      // Navigate to active (left screen)
+      if (currentIndex === 1) {
+        router.push('/requests/active');
       }
     },
     canSwipeLeft,
@@ -67,24 +53,22 @@ function OnboardingStackContent() {
             headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 220,
-            fullScreenGestureEnabled: false, // Disable native back gesture to avoid conflicts
+            fullScreenGestureEnabled: false,
             gestureEnabled: false,
           }}
         >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="slide1" />
-          <Stack.Screen name="slide2" />
-          <Stack.Screen name="slide3" />
+          <Stack.Screen name="active" />
+          <Stack.Screen name="history" />
         </Stack>
       </View>
     </PanGestureHandler>
   );
 }
 
-export default function OnboardingLayout() {
+export default function RequestsLayout() {
   return (
-    <SwipeProvider initialIndex={0} totalScreens={4}>
-      <OnboardingStackContent />
+    <SwipeProvider initialIndex={0} totalScreens={2}>
+      <RequestsStackContent />
     </SwipeProvider>
   );
 }

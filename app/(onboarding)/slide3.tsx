@@ -34,8 +34,18 @@ export default function Slide3Screen() {
   const router = useRouter();
 
   const finish = async () => {
-    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    router.replace('/request/location');
+    try {
+      // Mark onboarding as completed and ensure it's persisted
+      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+      // Small delay to ensure storage is committed before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      // Replace to onboarding flow - this completes the onboarding
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('Failed to complete onboarding:', error);
+      // Still navigate even if storage fails
+      router.replace('/(tabs)');
+    }
   };
 
   return (
@@ -43,7 +53,7 @@ export default function Slide3Screen() {
       <View style={styles.container}>
         {/* Nav bar */}
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.back()} />
+          <BackNavButton onPress={() => router.replace('/(onboarding)/slide2')} />
           <ProgressDots total={3} current={2} />
           <Pressable onPress={finish} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
