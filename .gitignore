@@ -8,6 +8,7 @@ node_modules/**/*
 dist/
 web-build/
 expo-env.d.ts
+client_595305494810-facdpfk0vn0js5lmetat6gnahie6lamk.apps.googleusercontent.com.plist
 
 # Native
 .kotlin/
@@ -83,3 +84,4 @@ yarn-error.*
 *.tsbuildinfo
 
 # @end expo-cli
+.vercel

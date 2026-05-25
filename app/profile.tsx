@@ -1,21 +1,25 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LocationPicker } from '@/components/location-picker';
 import { QuickActionCard } from '@/components/quick-action-card';
+import { AUTH_PROVIDER_LABELS, AUTH_STORAGE_FLAG_KEY } from '@/constants/auth';
+import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { Radii, Spacing } from '@/constants/theme';
 import { useLocation, useUser } from '@/context';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -35,10 +39,10 @@ const formatPhoneNumber = (value: string): string => {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, updateProfile, clearProfile } = useUser();
+  const { user, updateProfile, clearProfile, signOut } = useUser();
   const { userLocation } = useLocation();
   const colors = useThemeColors();
-  
+
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [address, setAddress] = useState(user?.homeAddress?.address ?? '');
@@ -68,15 +72,17 @@ export default function ProfileScreen() {
       await updateProfile({
         name: name.trim(),
         phone: phone.trim(),
-        homeAddress: address.trim() ? {
-          address: address.trim(),
-          latitude: addressLat,
-          longitude: addressLon,
-        } : user?.homeAddress ?? null,
+        homeAddress: address.trim()
+          ? {
+              address: address.trim(),
+              latitude: addressLat,
+              longitude: addressLon,
+            }
+          : user?.homeAddress ?? null,
         servingSize: servingSizeValue,
       });
       Alert.alert('Saved', 'Your profile has been updated', [
-        { text: 'OK', onPress: () => router.back() }
+        { text: 'OK', onPress: () => router.back() },
       ]);
     } catch {
       Alert.alert('Error', 'Failed to save profile');
@@ -91,26 +97,49 @@ export default function ProfileScreen() {
       'This will reset your profile and all request history. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear Data', 
+        {
+          text: 'Clear Data',
           style: 'destructive',
           onPress: async () => {
             await clearProfile();
             router.back();
-          }
+          },
         },
       ]
     );
   };
 
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'You will need to continue with account setup again.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut();
+          await AsyncStorage.multiSet([
+            [AUTH_STORAGE_FLAG_KEY, 'false'],
+            [ONBOARDING_STORAGE_KEY, 'true'],
+          ]);
+          router.replace('/(onboarding)/slide4' as any);
+        },
+      },
+    ]);
+  };
+
+  const authProviderLabel = user?.authProvider
+    ? AUTH_PROVIDER_LABELS[user.authProvider]
+    : 'Not signed in';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}
+        >
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </Pressable>
@@ -118,23 +147,37 @@ export default function ProfileScreen() {
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* Avatar Section */}
+          {user?.avatarUrl && (
+            <View style={styles.avatarSection}>
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={[styles.avatar, { borderColor: colors.accent }]}
+                contentFit="cover"
+              />
+            </View>
+          )}
+
           {/* Personal Information */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Personal Information</Text>
-            
+
             <View style={styles.field}>
               <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Full Name *</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: colors.surface, 
-                  color: colors.text,
-                  borderColor: colors.border 
-                }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
                 value={name}
                 onChangeText={(value) => setName(value.slice(0, MAX_NAME_LENGTH))}
                 placeholder="Enter your name"
@@ -146,11 +189,14 @@ export default function ProfileScreen() {
             <View style={styles.field}>
               <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Phone Number *</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: colors.surface, 
-                  color: colors.text,
-                  borderColor: colors.border 
-                }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
                 value={phone}
                 onChangeText={(value) => setPhone(formatPhoneNumber(value))}
                 placeholder="(647) 555-1234"
@@ -163,11 +209,14 @@ export default function ProfileScreen() {
             <View style={styles.field}>
               <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Serving Size</Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: colors.surface, 
-                  color: colors.text,
-                  borderColor: colors.border 
-                }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
                 value={servingSize}
                 onChangeText={(value) => setServingSize(value.replace(/[^\d]/g, '').slice(0, 1))}
                 placeholder="1"
@@ -209,6 +258,44 @@ export default function ProfileScreen() {
             </View>
           </View>
 
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Authentication</Text>
+            <View style={[styles.authCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={styles.authRow}>
+                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Status</Text>
+                <Text style={[styles.authValue, { color: colors.text }]}>
+                  {user?.isAuthenticated ? 'Signed in' : 'Signed out'}
+                </Text>
+              </View>
+              <View style={styles.authRow}>
+                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Provider</Text>
+                <Text style={[styles.authValue, { color: colors.text }]}>{authProviderLabel}</Text>
+              </View>
+              <View style={styles.authRow}>
+                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Email</Text>
+                <Text style={[styles.authValue, { color: colors.text }]}>{user?.email || 'Not provided'}</Text>
+              </View>
+
+              <Text style={[styles.authHint, { color: colors.mutedText }]}>
+                Manage your account by signing out and choosing a different sign-in method in onboarding.
+              </Text>
+
+              {user?.isAuthenticated ? (
+                <Pressable style={styles.authButton} onPress={handleSignOut}>
+                  <MaterialIcons name="logout" size={18} color="#DC2626" />
+                  <Text style={styles.authButtonText}>Sign Out</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={[styles.authPrimaryButton, { backgroundColor: colors.accent }]}
+                  onPress={() => router.push('/(onboarding)/slide4' as any)}
+                >
+                  <Text style={styles.authPrimaryButtonText}>Continue Account Setup</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+
           {/* Home Address */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Home Address</Text>
@@ -230,7 +317,7 @@ export default function ProfileScreen() {
 
           {/* Actions */}
           <View style={styles.section}>
-            <Pressable 
+            <Pressable
               style={[styles.saveButton, { backgroundColor: colors.accent }, isSaving && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={isSaving}
@@ -282,6 +369,17 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
   },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    paddingVertical: Spacing.lg,
+  },
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+  },
   section: {
     marginBottom: Spacing.xl,
   },
@@ -314,6 +412,55 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     rowGap: Spacing.md,
+  },
+  authCard: {
+    borderWidth: 1,
+    borderRadius: Radii.lg,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  authRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  authLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  authValue: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  authButton: {
+    marginTop: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+  },
+  authButtonText: {
+    color: '#DC2626',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  authHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: Spacing.xs,
+  },
+  authPrimaryButton: {
+    marginTop: Spacing.xs,
+    borderRadius: Radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  authPrimaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   saveButton: {
     borderRadius: Radii.pill,

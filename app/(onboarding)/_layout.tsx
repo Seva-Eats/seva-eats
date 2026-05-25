@@ -1,90 +1,21 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
-import React from 'react';
-import { View } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import { SwipeProvider, useSwipeContext } from '../../hooks/use-swipe-context';
-import { useSwipeNavigation } from '../../hooks/use-swipe-navigation';
-
-function OnboardingStackContent() {
-  const router = useRouter();
-  const segments = useSegments();
-  const { setTotalScreens, setCurrentIndex, canSwipeLeft, canSwipeRight } = useSwipeContext();
-
-  // Map route names to indices
-  const screenMap: Record<string, number> = {
-    index: 0,
-    slide1: 1,
-    slide2: 2,
-    slide3: 3,
-  };
-
-  const currentScreen = segments[segments.length - 1] || 'index';
-  const currentIndex = screenMap[currentScreen] ?? 0;
-  const totalScreens = Object.keys(screenMap).length;
-
-  // Update context when screen changes
-  React.useEffect(() => {
-    setTotalScreens(totalScreens);
-    setCurrentIndex(currentIndex);
-  }, [currentIndex, totalScreens, setTotalScreens, setCurrentIndex]);
-
-  const { onGestureEvent } = useSwipeNavigation({
-    onSwipeLeft: () => {
-      // Navigate forward
-      const nextRoutes: Record<number, string> = {
-        0: 'slide1',
-        1: 'slide2',
-        2: 'slide3',
-      };
-      const nextRoute = nextRoutes[currentIndex];
-      if (nextRoute) {
-        router.push(nextRoute);
-      }
-    },
-    onSwipeRight: () => {
-      // Navigate backward
-      if (currentIndex === 0) return; // Can't go back from first screen
-      const prevRoutes: Record<number, string> = {
-        1: 'index',
-        2: 'slide1',
-        3: 'slide2',
-      };
-      const prevRoute = prevRoutes[currentIndex];
-      if (prevRoute) {
-        router.push(prevRoute);
-      }
-    },
-    canSwipeLeft,
-    canSwipeRight,
-    enableHaptics: true,
-  });
-
-  return (
-    <PanGestureHandler onHandlerStateChange={onGestureEvent}>
-      <View style={{ flex: 1 }}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            animationDuration: 220,
-            fullScreenGestureEnabled: false, // Disable native back gesture to avoid conflicts
-            gestureEnabled: false,
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="slide1" />
-          <Stack.Screen name="slide2" />
-          <Stack.Screen name="slide3" />
-        </Stack>
-      </View>
-    </PanGestureHandler>
-  );
-}
+import { Stack } from 'expo-router';
 
 export default function OnboardingLayout() {
   return (
-    <SwipeProvider initialIndex={0} totalScreens={4}>
-      <OnboardingStackContent />
-    </SwipeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'default',
+        fullScreenGestureEnabled: true,
+        gestureEnabled: true,
+      }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="slide1" />
+      <Stack.Screen name="slide2" />
+      <Stack.Screen name="slide3" />
+      <Stack.Screen name="slide4" />
+      <Stack.Screen name="email-auth" />
+    </Stack>
   );
 }

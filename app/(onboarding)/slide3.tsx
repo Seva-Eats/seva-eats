@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
-import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
+import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 
 const STEPS = [
   {
@@ -27,40 +27,34 @@ const STEPS = [
 ];
 
 const ORANGE = ONBOARDING_COLORS.accent;
-const CTA_BUTTON_HEIGHT = 50;
-const CTA_BUTTON_RADIUS = 14;
 
 export default function Slide3Screen() {
   const router = useRouter();
 
-  const finish = async () => {
-    try {
-      // Mark onboarding as completed and ensure it's persisted
-      await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-      // Small delay to ensure storage is committed before navigation
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // Replace to onboarding flow - this completes the onboarding
-      router.replace('/(tabs)');
-    } catch (error) {
-      console.error('Failed to complete onboarding:', error);
-      // Still navigate even if storage fails
-      router.replace('/(tabs)');
+  const skip = async () => {
+    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+    router.replace('/(onboarding)/slide4' as any);
+  };
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
     }
+    router.replace('/(onboarding)/slide2');
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
-        {/* Nav bar */}
         <View style={styles.nav}>
-          <BackNavButton onPress={() => router.replace('/(onboarding)/slide2')} />
-          <ProgressDots total={3} current={2} />
-          <Pressable onPress={finish} hitSlop={12} style={styles.navBtn}>
+          <BackNavButton onPress={handleBack} />
+          <ProgressDots total={4} current={2} />
+          <Pressable onPress={skip} hitSlop={12} style={styles.navBtn}>
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>
         </View>
 
-        {/* Body */}
         <View style={styles.body}>
           <View style={styles.labelWrap}>
             <Text style={styles.label}>SIMPLE PROCESS</Text>
@@ -69,11 +63,9 @@ export default function Slide3Screen() {
           <Text style={styles.headline}>How It Works</Text>
           <Text style={styles.subtitle}>Access nutritious meals in 3 easy steps</Text>
 
-          {/* Steps */}
           <View style={styles.steps}>
             {STEPS.map((step, i) => (
               <View key={i} style={styles.stepRow}>
-                {/* Number + connector column */}
                 <View style={styles.stepLeft}>
                   <View style={styles.stepCircle}>
                     <Text style={styles.stepNum}>{`0${i + 1}`}</Text>
@@ -95,10 +87,9 @@ export default function Slide3Screen() {
           </View>
         </View>
 
-        {/* CTA */}
         <Pressable
           style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
-          onPress={finish}
+          onPress={() => router.push('/(onboarding)/slide4' as any)}
         >
           <Text style={styles.ctaText}>Next</Text>
         </Pressable>
@@ -114,19 +105,19 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
+    paddingHorizontal: ONBOARDING_TOKENS.horizontalPadding,
+    paddingTop: ONBOARDING_TOKENS.topPadding,
+    paddingBottom: ONBOARDING_TOKENS.bottomPadding,
   },
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 28,
+    marginBottom: ONBOARDING_TOKENS.navBottom,
   },
   navBtn: {
-    width: 40,
-    alignItems: 'center',
+    minWidth: 40,
+    alignItems: 'flex-end',
   },
   skipText: {
     fontSize: 15,
@@ -135,31 +126,35 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    gap: 16,
+    gap: 14,
   },
   labelWrap: {
     alignSelf: 'center',
+    backgroundColor: '#FFE8D4',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: ORANGE,
-    letterSpacing: 2,
+    letterSpacing: 1.4,
   },
   headline: {
-    fontSize: 50,
+    fontSize: ONBOARDING_TOKENS.titleSize,
     fontWeight: '800',
     color: '#1A1A1A',
     letterSpacing: -0.8,
     textAlign: 'center',
-    lineHeight: 58,
+    lineHeight: ONBOARDING_TOKENS.titleLineHeight,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: ONBOARDING_TOKENS.subtitleSize,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 12,
+    lineHeight: ONBOARDING_TOKENS.subtitleLineHeight,
+    marginBottom: 8,
   },
   steps: {
     gap: 0,
@@ -232,9 +227,9 @@ const styles = StyleSheet.create({
     marginLeft: 62,
   },
   ctaBtn: {
-    height: CTA_BUTTON_HEIGHT,
+    height: ONBOARDING_TOKENS.smallCtaHeight,
     backgroundColor: ORANGE,
-    borderRadius: CTA_BUTTON_RADIUS,
+    borderRadius: ONBOARDING_TOKENS.ctaRadius,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: ORANGE,
@@ -249,7 +244,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: ONBOARDING_TOKENS.ctaTextSize,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
