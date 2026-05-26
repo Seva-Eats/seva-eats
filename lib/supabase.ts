@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -34,7 +36,22 @@ export function isNetworkTimeoutError(error: unknown) {
 }
 
 export function getAuthRedirectUrl() {
-  return Linking.createURL('auth-callback');
+  let url: string;
+
+  if (Platform.OS === 'web') {
+    url = Linking.createURL('auth-callback');
+  } else {
+    const appScheme = Array.isArray(Constants.expoConfig?.scheme)
+      ? Constants.expoConfig?.scheme[0]
+      : Constants.expoConfig?.scheme;
+    const shouldUseAppScheme = Constants.executionEnvironment !== 'storeClient' && !!appScheme;
+
+    url = shouldUseAppScheme
+      ? Linking.createURL('auth-callback', { scheme: appScheme })
+      : Linking.createURL('auth-callback');
+  }
+
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
 type OtpType = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email' | 'email_change';

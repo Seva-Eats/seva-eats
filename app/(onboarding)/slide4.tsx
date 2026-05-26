@@ -30,11 +30,25 @@ export default function Slide4Screen() {
 
   const redirectTo = useMemo(() => getAuthRedirectUrl(), []);
 
-  const getSessionWithRetry = async () => {
-    const first = await getCurrentSession();
-    if (first?.user) return first;
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    return getCurrentSession();
+  const getSessionWithRetry = async (attempts = 3, delayMs = 350) => {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      const session = await getCurrentSession();
+      if (session?.user) return session;
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+    return null;
+  };
+
+  const waitForSession = async (timeoutMs = 5000, intervalMs = 300) => {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      const session = await getCurrentSession();
+      if (session?.user) return session;
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+    return null;
   };
 
   const handleBack = () => {
@@ -76,40 +90,25 @@ export default function Slide4Screen() {
       }
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-
-      if (result.type !== 'success' || !result.url) {
-        const existingSession = await getCurrentSession();
-        if (existingSession?.user) {
-          const authUser = existingSession.user;
-          await mockSignIn(provider, {
-            name:
-              typeof authUser.user_metadata?.full_name === 'string'
-                ? authUser.user_metadata.full_name
-                : `${providerName[provider]} User`,
-            email: authUser.email,
-          });
-          await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-          router.replace('/request/location');
-          return;
-        }
-
-        Alert.alert(
-          'Sign in did not return to app',
-          `Add this URL to Supabase Auth Redirect URLs: ${redirectTo}`
-        );
-        return;
-      }
-
-      const completed = await completeAuthFromUrl(result.url);
-      if (!completed) {
-        throw new Error('Missing auth callback parameters');
-      }
-
       WebBrowser.dismissBrowser();
 
-      const session = await getSessionWithRetry();
+      if (result.url) {
+        const completed = await completeAuthFromUrl(result.url);
+        if (!completed && result.type === 'success') {
+          throw new Error('Missing auth callback parameters');
+        }
+      }
+
+      const session = await waitForSession();
       const authUser = session?.user;
       if (!authUser) {
+        if (result.type !== 'success') {
+          Alert.alert(
+            'Sign in did not return to app',
+            `Add this URL to Supabase Auth Redirect URLs: ${redirectTo}\n\nIf you are on iOS Simulator, run the native dev build with npm run ios so Supabase can return to the sevaeats:// callback.`
+          );
+          return;
+        }
         throw new Error('Missing authenticated user');
       }
 
