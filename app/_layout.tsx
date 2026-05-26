@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
@@ -115,6 +116,19 @@ function RootLayoutContent() {
     const isAuthenticated = !!user?.isAuthenticated;
 
     if (!hasOnboarded && !inOnboarding && !inAuthCallback) {
+      if (isAuthenticated) {
+        AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)
+          .then((value) => {
+            if (value === 'true') {
+              setHasOnboarded(true);
+              return;
+            }
+            router.replace('/(onboarding)');
+          })
+          .catch(() => router.replace('/(onboarding)'));
+        return;
+      }
+
       router.replace('/(onboarding)');
       return;
     }
@@ -134,26 +148,26 @@ function RootLayoutContent() {
   }
 
   return (
-    <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          animationTypeForReplace: 'pop',
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
-        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="request/location" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="request/new" options={{ headerShown: false }} />
-        <Stack.Screen name="request/details" options={{ headerShown: false }} />
-        <Stack.Screen name="request/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="profile" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationTypeForReplace: 'pop',
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
+          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="request" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen name="requests" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

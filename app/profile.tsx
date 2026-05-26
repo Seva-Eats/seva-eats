@@ -1,18 +1,20 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -130,6 +132,17 @@ export default function ProfileScreen() {
   const authProviderLabel = user?.authProvider
     ? AUTH_PROVIDER_LABELS[user.authProvider]
     : 'Not signed in';
+  const displayName = user?.name?.trim() || 'Community Member';
+  const displayEmail = user?.email?.trim() || 'No email on file';
+  const avatarInitial = displayName.charAt(0).toUpperCase();
+  const statusLabel = user?.isAuthenticated ? 'Signed in' : 'Signed out';
+  const accountHint = user?.isAuthenticated
+    ? 'Signed in through onboarding. Sign out to switch accounts.'
+    : 'Finish account setup to unlock delivery updates and account history.';
+  const providerKey = user?.authProvider ?? null;
+  const isGoogleProvider = providerKey === 'google';
+  const isAppleProvider = providerKey === 'apple';
+  const isEmailProvider = providerKey === 'email';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -152,16 +165,146 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          {/* Avatar Section */}
-          {user?.avatarUrl && (
-            <View style={styles.avatarSection}>
-              <Image
-                source={{ uri: user.avatarUrl }}
-                style={[styles.avatar, { borderColor: colors.accent }]}
-                contentFit="cover"
-              />
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]} selectable>
+              Account
+            </Text>
+            <View
+              style={[
+                styles.accountCard,
+                {
+                  backgroundColor: colors.surfaceElevated,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={styles.accountHeader}>
+                {user?.avatarUrl ? (
+                  <View style={[styles.avatarShell, { borderColor: colors.accent }]}>
+                    <Image
+                      source={{ uri: user.avatarUrl }}
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                    />
+                  </View>
+                ) : (
+                  <View style={[styles.avatarFallback, { backgroundColor: colors.accent }]}>
+                    <Text style={styles.avatarInitial} selectable>
+                      {avatarInitial}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.accountInfo}>
+                  <Text style={[styles.accountName, { color: colors.text }]} selectable>
+                    {displayName}
+                  </Text>
+                  <Text
+                    style={[styles.accountEmail, { color: colors.mutedText }]}
+                    numberOfLines={1}
+                    selectable
+                  >
+                    {displayEmail}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.accountMetaRow}>
+                <View
+                  style={[
+                    styles.accountMetaItem,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
+                >
+                  <Text style={[styles.accountMetaLabel, { color: colors.mutedText }]} selectable>
+                    Status
+                  </Text>
+                  <Text style={[styles.accountMetaValue, { color: colors.text }]} selectable>
+                    {statusLabel}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.accountMetaItem,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
+                >
+                  <View style={styles.accountMetaHeader}>
+                    <Text style={[styles.accountMetaLabel, { color: colors.mutedText }]} selectable>
+                      Provider
+                    </Text>
+                    <View style={styles.providerIcons}>
+                      <View
+                        style={[
+                          styles.providerIconChip,
+                          {
+                            backgroundColor: isGoogleProvider ? colors.accent : colors.surface,
+                            borderColor: isGoogleProvider ? colors.accent : colors.border,
+                          },
+                        ]}
+                      >
+                        <FontAwesome
+                          name="google"
+                          size={13}
+                          color={isGoogleProvider ? '#FFFFFF' : colors.mutedText}
+                        />
+                      </View>
+                      <View
+                        style={[
+                          styles.providerIconChip,
+                          {
+                            backgroundColor: isAppleProvider ? colors.accent : colors.surface,
+                            borderColor: isAppleProvider ? colors.accent : colors.border,
+                          },
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name="apple"
+                          size={14}
+                          color={isAppleProvider ? '#FFFFFF' : colors.mutedText}
+                        />
+                      </View>
+                      <View
+                        style={[
+                          styles.providerIconChip,
+                          {
+                            backgroundColor: isEmailProvider ? colors.accent : colors.surface,
+                            borderColor: isEmailProvider ? colors.accent : colors.border,
+                          },
+                        ]}
+                      >
+                        <MaterialIcons
+                          name="email"
+                          size={14}
+                          color={isEmailProvider ? '#FFFFFF' : colors.mutedText}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={[styles.accountMetaValue, { color: colors.text }]} selectable>
+                    {authProviderLabel}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={[styles.accountHint, { color: colors.mutedText }]} selectable>
+                {accountHint}
+              </Text>
+
+              {user?.isAuthenticated ? (
+                <Pressable style={styles.accountSignOutButton} onPress={handleSignOut}>
+                  <MaterialIcons name="logout" size={18} color="#DC2626" />
+                  <Text style={styles.accountSignOutText}>Sign Out</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={[styles.accountPrimaryButton, { backgroundColor: colors.accent }]}
+                  onPress={() => router.push('/(onboarding)/slide4' as any)}
+                >
+                  <Text style={styles.accountPrimaryButtonText}>Continue Account Setup</Text>
+                </Pressable>
+              )}
             </View>
-          )}
+          </View>
 
           {/* Personal Information */}
           <View style={styles.section}>
@@ -258,44 +401,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Authentication</Text>
-            <View style={[styles.authCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.authRow}>
-                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Status</Text>
-                <Text style={[styles.authValue, { color: colors.text }]}>
-                  {user?.isAuthenticated ? 'Signed in' : 'Signed out'}
-                </Text>
-              </View>
-              <View style={styles.authRow}>
-                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Provider</Text>
-                <Text style={[styles.authValue, { color: colors.text }]}>{authProviderLabel}</Text>
-              </View>
-              <View style={styles.authRow}>
-                <Text style={[styles.authLabel, { color: colors.mutedText }]}>Email</Text>
-                <Text style={[styles.authValue, { color: colors.text }]}>{user?.email || 'Not provided'}</Text>
-              </View>
-
-              <Text style={[styles.authHint, { color: colors.mutedText }]}>
-                Manage your account by signing out and choosing a different sign-in method in onboarding.
-              </Text>
-
-              {user?.isAuthenticated ? (
-                <Pressable style={styles.authButton} onPress={handleSignOut}>
-                  <MaterialIcons name="logout" size={18} color="#DC2626" />
-                  <Text style={styles.authButtonText}>Sign Out</Text>
-                </Pressable>
-              ) : (
-                <Pressable
-                  style={[styles.authPrimaryButton, { backgroundColor: colors.accent }]}
-                  onPress={() => router.push('/(onboarding)/slide4' as any)}
-                >
-                  <Text style={styles.authPrimaryButtonText}>Continue Account Setup</Text>
-                </Pressable>
-              )}
-            </View>
-          </View>
-
           {/* Home Address */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Home Address</Text>
@@ -369,16 +474,128 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
   },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-    paddingVertical: Spacing.lg,
+  accountCard: {
+    borderWidth: 1,
+    borderRadius: Radii.lg,
+    borderCurve: 'continuous',
+    padding: Spacing.md,
+    gap: Spacing.md,
   },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 3,
+  accountHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  avatarShell: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderCurve: 'continuous',
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderCurve: 'continuous',
+  },
+  avatarFallback: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '700',
+  },
+  accountInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  accountName: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  accountEmail: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  accountMetaRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  accountMetaItem: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: Radii.md,
+    borderCurve: 'continuous',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: 4,
+  },
+  accountMetaLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  accountMetaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.xs,
+  },
+  providerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  providerIconChip: {
+    width: 26,
+    height: 26,
+    borderRadius: 9,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountMetaValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  accountHint: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  accountPrimaryButton: {
+    borderRadius: Radii.md,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  accountPrimaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  accountSignOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+  },
+  accountSignOutText: {
+    color: '#DC2626',
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     marginBottom: Spacing.xl,
@@ -412,55 +629,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     rowGap: Spacing.md,
-  },
-  authCard: {
-    borderWidth: 1,
-    borderRadius: Radii.lg,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  authRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  authLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  authValue: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  authButton: {
-    marginTop: Spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-  },
-  authButtonText: {
-    color: '#DC2626',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  authHint: {
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: Spacing.xs,
-  },
-  authPrimaryButton: {
-    marginTop: Spacing.xs,
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  authPrimaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
   saveButton: {
     borderRadius: Radii.pill,

@@ -23,6 +23,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@supabase/supabase-js": "^2.106.2",
     "expo": "~55.0.15",
     "expo-blur": "~55.0.14",
     "expo-constants": "~55.0.14",

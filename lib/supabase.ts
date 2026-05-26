@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
-import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supportsWebCrypto = Boolean((globalThis as any)?.crypto?.subtle);
 
 export const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -15,7 +15,7 @@ export const supabase = hasSupabaseConfig
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
-        flowType: 'pkce',
+        flowType: supportsWebCrypto ? 'pkce' : 'implicit',
       },
     })
   : null;
@@ -34,10 +34,7 @@ export function isNetworkTimeoutError(error: unknown) {
 }
 
 export function getAuthRedirectUrl() {
-  if (Constants.appOwnership === 'expo') {
-    return Linking.createURL('auth-callback');
-  }
-  return Linking.createURL('auth-callback', { scheme: 'sevaeats' });
+  return Linking.createURL('auth-callback');
 }
 
 type OtpType = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email' | 'email_change';

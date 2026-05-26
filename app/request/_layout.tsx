@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
 import { SwipeProvider, useSwipeContext } from '../../hooks/use-swipe-context';
 import { useSwipeNavigation } from '../../hooks/use-swipe-navigation';
 
@@ -84,8 +84,10 @@ function RequestStackContent() {
 
 export default function RequestLayout() {
   return (
-    <SwipeProvider initialIndex={0} totalScreens={4}>
-      <RequestStackContent />
-    </SwipeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SwipeProvider initialIndex={0} totalScreens={4}>
+        <RequestStackContent />
+      </SwipeProvider>
+    </GestureHandlerRootView>
   );
 }

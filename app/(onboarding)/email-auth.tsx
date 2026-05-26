@@ -43,19 +43,27 @@ export default function EmailAuthScreen() {
     setIsLoading(true);
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: trimmedEmail,
           password: password.trim(),
         });
 
-        if (error) {
-          throw error;
+        if (signUpError) {
+          throw signUpError;
         }
 
-        const authUser = data.user;
-        if (!data.session) {
-          Alert.alert('Verify your email', 'Check your inbox to confirm your account before signing in.');
-          return;
+        let authUser = signUpData.user;
+        if (!signUpData.session) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: trimmedEmail,
+            password: password.trim(),
+          });
+
+          if (signInError) {
+            throw signInError;
+          }
+
+          authUser = signInData.user;
         }
 
         await mockSignIn('email', {
@@ -98,6 +106,13 @@ export default function EmailAuthScreen() {
       }
       if (mode === 'signup' && (message.includes('already') || message.includes('exists'))) {
         Alert.alert('Account already exists', 'Use Continue with Email to sign in.');
+        return;
+      }
+      if (mode === 'signup' && (message.includes('email not confirmed') || message.includes('email_not_confirmed'))) {
+        Alert.alert(
+          'Email verification is enabled',
+          'To skip verification for now, turn off Confirm email in Supabase Auth settings (Email provider).'
+        );
         return;
       }
       if (isNetworkTimeoutError(error)) {
@@ -248,6 +263,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     color: '#111827',
     fontSize: 15,
+    textAlign: 'center',
   },
   primaryButton: {
     minHeight: 48,

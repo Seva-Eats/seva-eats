@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +25,13 @@ export default function AuthCallbackScreen() {
   const [status, setStatus] = useState<'loading' | 'done' | 'error'>('loading');
   const handledUrlRef = useRef<string | null>(null);
 
+  const getSessionWithRetry = async () => {
+    const first = await getCurrentSession();
+    if (first?.user) return first;
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    return getCurrentSession();
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -33,10 +41,12 @@ export default function AuthCallbackScreen() {
 
       handledUrlRef.current = url;
 
+      WebBrowser.dismissBrowser();
+
       try {
         const completed = await completeAuthFromUrl(url);
         if (!completed) throw new Error('Missing Supabase auth callback parameters');
-        const session = await getCurrentSession();
+        const session = await getSessionWithRetry();
         if (session?.user) {
           await mockSignIn(providerFromSession(session), {
             name:

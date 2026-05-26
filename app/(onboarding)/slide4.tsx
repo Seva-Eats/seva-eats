@@ -10,7 +10,7 @@ import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 import { useUser } from '@/context';
-import { getAuthRedirectUrl, hasSupabaseConfig, isNetworkTimeoutError, supabase } from '@/lib/supabase';
+import { completeAuthFromUrl, getAuthRedirectUrl, getCurrentSession, hasSupabaseConfig, isNetworkTimeoutError, supabase } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -29,6 +29,13 @@ export default function Slide4Screen() {
   const [isLoading, setIsLoading] = useState<OAuthProvider | null>(null);
 
   const redirectTo = useMemo(() => getAuthRedirectUrl(), []);
+
+  const getSessionWithRetry = async () => {
+    const first = await getCurrentSession();
+    if (first?.user) return first;
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    return getCurrentSession();
+  };
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -71,23 +78,41 @@ export default function Slide4Screen() {
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
       if (result.type !== 'success' || !result.url) {
+        const existingSession = await getCurrentSession();
+        if (existingSession?.user) {
+          const authUser = existingSession.user;
+          await mockSignIn(provider, {
+            name:
+              typeof authUser.user_metadata?.full_name === 'string'
+                ? authUser.user_metadata.full_name
+                : `${providerName[provider]} User`,
+            email: authUser.email,
+          });
+          await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+          router.replace('/request/location');
+          return;
+        }
+
+        Alert.alert(
+          'Sign in did not return to app',
+          `Add this URL to Supabase Auth Redirect URLs: ${redirectTo}`
+        );
         return;
       }
 
-      const callbackUrl = new URL(result.url);
-      const code = callbackUrl.searchParams.get('code');
-
-      if (!code) {
-        throw new Error('Missing auth code');
+      const completed = await completeAuthFromUrl(result.url);
+      if (!completed) {
+        throw new Error('Missing auth callback parameters');
       }
 
-      const exchangeResult = await supabase.auth.exchangeCodeForSession(code);
+      WebBrowser.dismissBrowser();
 
-      if (exchangeResult.error) {
-        throw exchangeResult.error;
+      const session = await getSessionWithRetry();
+      const authUser = session?.user;
+      if (!authUser) {
+        throw new Error('Missing authenticated user');
       }
 
-      const authUser = exchangeResult.data.user;
       await mockSignIn(provider, {
         name:
           typeof authUser?.user_metadata?.full_name === 'string'
