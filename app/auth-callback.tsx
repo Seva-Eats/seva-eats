@@ -3,9 +3,10 @@ import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY } from '@/constants/onboarding';
 import { useUser } from '@/context';
 import { completeAuthFromUrl, getCurrentSession } from '@/lib/supabase';
@@ -87,15 +88,9 @@ export default function AuthCallbackScreen() {
             </Pressable>
           </>
         ) : (
-          <>
-            <ActivityIndicator color={ONBOARDING_COLORS.accent} size="large" />
-            <Text style={styles.title}>{status === 'done' ? 'Verified' : 'Finishing sign in'}</Text>
-            <Text style={styles.subtitle}>
-              {status === 'done'
-                ? 'Taking you into Seva Eats...'
-                : 'Please wait while we securely connect your account.'}
-            </Text>
-          </>
+          <LoadingOverlay 
+            message={status === 'done' ? 'Verified!' : 'Finishing sign in...'} 
+          />
         )}
       </View>
     </SafeAreaView>

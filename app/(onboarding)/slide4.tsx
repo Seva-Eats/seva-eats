@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
 import ProgressDots from '@/components/onboarding/ProgressDots';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { ONBOARDING_COLORS, ONBOARDING_STORAGE_KEY, ONBOARDING_TOKENS } from '@/constants/onboarding';
 import { useUser } from '@/context';
 import { completeAuthFromUrl, getAuthRedirectUrl, getCurrentSession, hasSupabaseConfig, isNetworkTimeoutError, supabase } from '@/lib/supabase';
@@ -30,17 +31,6 @@ export default function Slide4Screen() {
 
   const redirectTo = useMemo(() => getAuthRedirectUrl(), []);
 
-  const getSessionWithRetry = async (attempts = 3, delayMs = 350) => {
-    for (let attempt = 0; attempt < attempts; attempt += 1) {
-      const session = await getCurrentSession();
-      if (session?.user) return session;
-      if (attempt < attempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-      }
-    }
-    return null;
-  };
-
   const waitForSession = async (timeoutMs = 5000, intervalMs = 300) => {
     const startedAt = Date.now();
     while (Date.now() - startedAt < timeoutMs) {
@@ -49,6 +39,19 @@ export default function Slide4Screen() {
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
     }
     return null;
+  };
+
+  const openOAuthSession = async (authUrl: string, provider: OAuthProvider) => {
+    const preferEphemeralSession = Platform.OS === 'ios' && provider === 'apple';
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo, {
+      preferEphemeralSession,
+    });
+
+    if (Platform.OS === 'ios' && provider === 'apple' && result.type === 'dismiss') {
+      await WebBrowser.openBrowserAsync(authUrl);
+    }
+
+    return result;
   };
 
   const handleBack = () => {
@@ -89,10 +92,9 @@ export default function Slide4Screen() {
         throw error ?? new Error('Unable to start OAuth flow');
       }
 
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      WebBrowser.dismissBrowser();
+      const result = await openOAuthSession(data.url, provider);
 
-      if (result.url) {
+      if ('url' in result && result.url) {
         const completed = await completeAuthFromUrl(result.url);
         if (!completed && result.type === 'success') {
           throw new Error('Missing auth callback parameters');
@@ -141,6 +143,7 @@ export default function Slide4Screen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      {isLoading && <LoadingOverlay message={`Signing in with ${providerName[isLoading]}...`} />}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboard}

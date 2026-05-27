@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "buildReactNativeFromSource": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.advay.sewaeats",
       "infoPlist": {
@@ -27,7 +28,6 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
       ],
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.advay.sewaeats"
     },

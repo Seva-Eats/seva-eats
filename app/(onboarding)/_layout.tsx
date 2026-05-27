@@ -5,8 +5,10 @@ export default function OnboardingLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'default',
-        fullScreenGestureEnabled: true,
+        animation: 'slide_from_right',
+        animationDuration: 220,
+        animationTypeForReplace: 'pop',
+        fullScreenGestureEnabled: false,
         gestureEnabled: true,
       }}
     >

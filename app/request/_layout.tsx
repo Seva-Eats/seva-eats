@@ -45,6 +45,10 @@ function RequestStackContent() {
     onSwipeRight: () => {
       // Navigate backward in request flow
       if (currentIndex === 0) return;
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
       const prevRoutes: Record<number, string> = {
         1: 'location',
         2: 'new',
@@ -52,7 +56,7 @@ function RequestStackContent() {
       };
       const prevRoute = prevRoutes[currentIndex];
       if (prevRoute) {
-        router.push(`/request/${prevRoute}`);
+        router.replace(`/request/${prevRoute}`);
       }
     },
     canSwipeLeft,
@@ -68,6 +72,7 @@ function RequestStackContent() {
             headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 220,
+            animationTypeForReplace: 'pop',
             fullScreenGestureEnabled: false,
             gestureEnabled: false,
           }}

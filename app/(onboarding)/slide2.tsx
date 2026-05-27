@@ -1,8 +1,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { type ComponentProps } from 'react';
+import { useEffect, type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
@@ -13,6 +14,18 @@ const ORANGE = ONBOARDING_COLORS.accent;
 
 export default function Slide2Screen() {
   const router = useRouter();
+  const float = useSharedValue(0);
+
+  useEffect(() => {
+    float.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2000 }),
+        withTiming(0, { duration: 2000 })
+      ),
+      -1,
+      true
+    );
+  }, []);
 
   const skip = async () => {
     await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
@@ -43,13 +56,13 @@ export default function Slide2Screen() {
           contentContainerStyle={styles.bodyContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.labelWrap}>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.labelWrap}>
             <Text style={styles.label}>DID YOU KNOW</Text>
-          </View>
+          </Animated.View>
 
-          <Text style={styles.headline}>The Tradition{`\n`}of Langar</Text>
+          <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.headline}>The Tradition{`\n`}of Langar</Animated.Text>
 
-          <View style={styles.quoteCard}>
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.quoteCard}>
             <View style={styles.cardAccent} />
             <View style={styles.cardContent}>
               <Text style={styles.quoteOpen}>{'\u201C'}</Text>
@@ -64,15 +77,15 @@ export default function Slide2Screen() {
                 <Text style={styles.attribText}>The Sikh tradition of Langar</Text>
               </View>
             </View>
-          </View>
+          </Animated.View>
 
-          <Text style={styles.outro}>We bring this 500-year-old tradition to your doorstep with care.</Text>
+          <Animated.Text entering={FadeInDown.delay(400).springify()} style={styles.outro}>We bring this 500-year-old tradition to your doorstep with care.</Animated.Text>
 
-          <View style={styles.pillRow}>
-            <Pill icon="people" label="Community" />
-            <Pill icon="volunteer-activism" label="Selfless Service" />
-            <Pill icon="lock-open" label="Open to all" />
-          </View>
+          <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.pillRow}>
+            <Pill icon="people" label="Community" floatValue={float} />
+            <Pill icon="volunteer-activism" label="Selfless Service" floatValue={float} />
+            <Pill icon="lock-open" label="Open to all" floatValue={float} />
+          </Animated.View>
 
           <Pressable
             style={({ pressed }) => [styles.ctaBtn, pressed && styles.pressed]}
@@ -86,12 +99,24 @@ export default function Slide2Screen() {
   );
 }
 
-function Pill({ icon, label }: { icon: ComponentProps<typeof MaterialIcons>['name']; label: string }) {
+function Pill({ 
+  icon, 
+  label, 
+  floatValue 
+}: { 
+  icon: ComponentProps<typeof MaterialIcons>['name']; 
+  label: string; 
+  floatValue: Animated.SharedValue<number>;
+}) {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatValue.value * -4 }],
+  }));
+
   return (
-    <View style={styles.pill}>
+    <Animated.View style={[styles.pill, animatedStyle]}>
       <MaterialIcons name={icon} size={15} color={ORANGE} />
       <Text style={styles.pillText}>{label}</Text>
-    </View>
+    </Animated.View>
   );
 }
 

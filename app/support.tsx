@@ -2,13 +2,14 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Alert,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radii, Spacing } from '@/constants/theme';
@@ -120,48 +121,61 @@ export default function SupportScreen() {
         {/* Contact Support Section intentionally removed */}
 
         {/* FAQ Section */}
-        <View style={styles.section}>
+        <Animated.View 
+          entering={FadeInDown.delay(100).springify()}
+          style={styles.section}
+        >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Frequently asked questions
           </Text>
           <View style={styles.faqList}>
-            {faqs.map((faq) => {
+            {faqs.map((faq, index) => {
               const isExpanded = expandedFAQ === faq.id;
               return (
-                <Pressable
+                <Animated.View 
                   key={faq.id}
-                  style={[
-                    styles.faqCard,
-                    {
-                      backgroundColor: colors.isDark ? colors.surface : '#FFFFFF',
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  onPress={() => toggleFAQ(faq.id)}
+                  entering={FadeInDown.delay(200 + (index * 50)).springify()}
                 >
-                  <View style={styles.faqHeader}>
-                    <Text style={[styles.faqQuestion, { color: colors.text }]}>
-                      {faq.question}
-                    </Text>
-                    <MaterialIcons
-                      name={isExpanded ? 'expand-less' : 'expand-more'}
-                      size={24}
-                      color={colors.mutedText}
-                    />
-                  </View>
-                  {isExpanded && (
-                    <Text style={[styles.faqAnswer, { color: colors.mutedText }]}>
-                      {faq.answer}
-                    </Text>
-                  )}
-                </Pressable>
+                  <Pressable
+                    style={[
+                      styles.faqCard,
+                      {
+                        backgroundColor: colors.isDark ? colors.surface : '#FFFFFF',
+                        borderColor: colors.border,
+                      },
+                    ]}
+                    onPress={() => toggleFAQ(faq.id)}
+                  >
+                    <View style={styles.faqHeader}>
+                      <Text style={[styles.faqQuestion, { color: colors.text }]}>
+                        {faq.question}
+                      </Text>
+                      <MaterialIcons
+                        name={isExpanded ? 'expand-less' : 'expand-more'}
+                        size={24}
+                        color={colors.mutedText}
+                      />
+                    </View>
+                    {isExpanded && (
+                      <Animated.Text 
+                        entering={FadeInUp.duration(300)}
+                        style={[styles.faqAnswer, { color: colors.mutedText }]}
+                      >
+                        {faq.answer}
+                      </Animated.Text>
+                    )}
+                  </Pressable>
+                </Animated.View>
               );
             })}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Resources Section */}
-        <View style={styles.section}>
+        <Animated.View 
+          entering={FadeInDown.delay(600).springify()}
+          style={styles.section}
+        >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Resources
           </Text>
@@ -244,7 +258,7 @@ export default function SupportScreen() {
               />
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
 
         {/* App Version */}
         <View style={styles.versionContainer}>

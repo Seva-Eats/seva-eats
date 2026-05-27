@@ -7,6 +7,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radii, Spacing } from '@/constants/theme';
@@ -121,19 +122,22 @@ export default function RequestHistoryScreen() {
           </View>
         ) : (
           <View style={styles.requestsList}>
-            {completedRequests.map((request) => (
-              <Pressable
+            {completedRequests.map((request, index) => (
+              <Animated.View 
                 key={request.id}
-                style={({ pressed }) => [
-                  styles.requestCard,
-                  {
-                    backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
-                    borderColor: colors.border,
-                  },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() => router.push(`/request/${request.id}` as any)}
+                entering={FadeInDown.delay(index * 100).springify()}
               >
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.requestCard,
+                    {
+                      backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
+                      borderColor: colors.border,
+                    },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                  onPress={() => router.push(`/request/${request.id}` as any)}
+                >
                 <View style={styles.requestHeader}>
                   <View
                     style={[
@@ -209,8 +213,9 @@ export default function RequestHistoryScreen() {
                   <MaterialIcons name="chevron-right" size={20} color="#F97316" />
                 </View>
               </Pressable>
-            ))}
-          </View>
+            </Animated.View>
+          ))}
+        </View>
         )}
       </ScrollView>
       </SafeAreaView>

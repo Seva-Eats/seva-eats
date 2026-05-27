@@ -2,6 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BackNavButton from '@/components/onboarding/BackNavButton';
@@ -56,16 +57,20 @@ export default function Slide3Screen() {
         </View>
 
         <View style={styles.body}>
-          <View style={styles.labelWrap}>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.labelWrap}>
             <Text style={styles.label}>SIMPLE PROCESS</Text>
-          </View>
+          </Animated.View>
 
-          <Text style={styles.headline}>How It Works</Text>
-          <Text style={styles.subtitle}>Access nutritious meals in 3 easy steps</Text>
+          <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.headline}>How It Works</Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(300).springify()} style={styles.subtitle}>Access nutritious meals in 3 easy steps</Animated.Text>
 
           <View style={styles.steps}>
             {STEPS.map((step, i) => (
-              <View key={i} style={styles.stepRow}>
+              <Animated.View 
+                key={i} 
+                entering={FadeInRight.delay(400 + (i * 150)).springify()} 
+                style={styles.stepRow}
+              >
                 <View style={styles.stepLeft}>
                   <View style={styles.stepCircle}>
                     <Text style={styles.stepNum}>{`0${i + 1}`}</Text>
@@ -82,7 +87,7 @@ export default function Slide3Screen() {
                   </View>
                   <Text style={styles.stepDesc}>{step.desc}</Text>
                 </View>
-              </View>
+              </Animated.View>
             ))}
           </View>
         </View>

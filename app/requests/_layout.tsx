@@ -53,6 +53,7 @@ function RequestsStackContent() {
             headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 220,
+            animationTypeForReplace: 'pop',
             fullScreenGestureEnabled: false,
             gestureEnabled: false,
           }}

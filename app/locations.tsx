@@ -9,6 +9,7 @@ import {
     View,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { dropOffLocations, type DropOffLocation } from '@/constants/mock-data';
@@ -192,22 +193,25 @@ export default function NearbyLocationsScreen() {
             </View>
 
             <View style={styles.locationsList}>
-              {dropOffLocations.map((location) => (
-                <Pressable
+              {dropOffLocations.map((location, index) => (
+                <Animated.View 
                   key={location.id}
-                  style={({ pressed }) => [
-                    styles.locationCard,
-                    {
-                      backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
-                      borderColor: colors.border,
-                    },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => {
-                    // Navigate to request with pre-selected location
-                    router.push('/request/location');
-                  }}
+                  entering={FadeInDown.delay(index * 100).springify()}
                 >
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.locationCard,
+                      {
+                        backgroundColor: colors.isDark ? colors.surface : '#FFF8F0',
+                        borderColor: colors.border,
+                      },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={() => {
+                      // Navigate to request with pre-selected location
+                      router.push('/request/location');
+                    }}
+                  >
                   <View
                     style={[
                       styles.locationIconContainer,
@@ -308,8 +312,9 @@ export default function NearbyLocationsScreen() {
                     </View>
                   </View>
                 </Pressable>
-              ))}
-            </View>
+              </Animated.View>
+            ))}
+          </View>
           </ScrollView>
         )}
       </SafeAreaView>

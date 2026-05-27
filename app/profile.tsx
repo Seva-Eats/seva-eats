@@ -2,22 +2,25 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedPressable } from '@/components/animated-pressable';
 import { LocationPicker } from '@/components/location-picker';
 import { QuickActionCard } from '@/components/quick-action-card';
 import { AUTH_PROVIDER_LABELS, AUTH_STORAGE_FLAG_KEY } from '@/constants/auth';
@@ -70,6 +73,7 @@ export default function ProfileScreen() {
     }
 
     setIsSaving(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
       await updateProfile({
         name: name.trim(),
@@ -103,6 +107,7 @@ export default function ProfileScreen() {
           text: 'Clear Data',
           style: 'destructive',
           onPress: async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
             await clearProfile();
             router.back();
           },
@@ -118,6 +123,7 @@ export default function ProfileScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: async () => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           await signOut();
           await AsyncStorage.multiSet([
             [AUTH_STORAGE_FLAG_KEY, 'false'],
@@ -140,9 +146,21 @@ export default function ProfileScreen() {
     ? 'Signed in through onboarding. Sign out to switch accounts.'
     : 'Finish account setup to unlock delivery updates and account history.';
   const providerKey = user?.authProvider ?? null;
-  const isGoogleProvider = providerKey === 'google';
-  const isAppleProvider = providerKey === 'apple';
-  const isEmailProvider = providerKey === 'email';
+  const providerIcon = (() => {
+    if (providerKey === 'google') {
+      return <FontAwesome name="google" size={16} color="#FFFFFF" />;
+    }
+    if (providerKey === 'apple') {
+      return <MaterialCommunityIcons name="apple" size={17} color="#FFFFFF" />;
+    }
+    if (providerKey === 'email') {
+      return <MaterialIcons name="email" size={17} color="#FFFFFF" />;
+    }
+    if (providerKey === 'guest') {
+      return <MaterialIcons name="person-outline" size={17} color="#FFFFFF" />;
+    }
+    return null;
+  })();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -165,7 +183,7 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]} selectable>
               Account
             </Text>
@@ -228,61 +246,26 @@ export default function ProfileScreen() {
                     { backgroundColor: colors.surface, borderColor: colors.border },
                   ]}
                 >
-                  <View style={styles.accountMetaHeader}>
-                    <Text style={[styles.accountMetaLabel, { color: colors.mutedText }]} selectable>
-                      Provider
-                    </Text>
-                    <View style={styles.providerIcons}>
-                      <View
-                        style={[
-                          styles.providerIconChip,
-                          {
-                            backgroundColor: isGoogleProvider ? colors.accent : colors.surface,
-                            borderColor: isGoogleProvider ? colors.accent : colors.border,
-                          },
-                        ]}
-                      >
-                        <FontAwesome
-                          name="google"
-                          size={13}
-                          color={isGoogleProvider ? '#FFFFFF' : colors.mutedText}
-                        />
-                      </View>
-                      <View
-                        style={[
-                          styles.providerIconChip,
-                          {
-                            backgroundColor: isAppleProvider ? colors.accent : colors.surface,
-                            borderColor: isAppleProvider ? colors.accent : colors.border,
-                          },
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name="apple"
-                          size={14}
-                          color={isAppleProvider ? '#FFFFFF' : colors.mutedText}
-                        />
-                      </View>
-                      <View
-                        style={[
-                          styles.providerIconChip,
-                          {
-                            backgroundColor: isEmailProvider ? colors.accent : colors.surface,
-                            borderColor: isEmailProvider ? colors.accent : colors.border,
-                          },
-                        ]}
-                      >
-                        <MaterialIcons
-                          name="email"
-                          size={14}
-                          color={isEmailProvider ? '#FFFFFF' : colors.mutedText}
-                        />
-                      </View>
+                  <View style={styles.accountMetaContent}>
+                    <View style={styles.accountMetaText}>
+                      <Text style={[styles.accountMetaLabel, { color: colors.mutedText }]} selectable>
+                        Provider
+                      </Text>
+                      <Text style={[styles.accountMetaValue, { color: colors.text }]} selectable>
+                        {authProviderLabel}
+                      </Text>
                     </View>
+                    {providerIcon ? (
+                      <View
+                        style={[
+                          styles.providerIconChip,
+                          { backgroundColor: colors.accent, borderColor: colors.accent },
+                        ]}
+                      >
+                        {providerIcon}
+                      </View>
+                    ) : null}
                   </View>
-                  <Text style={[styles.accountMetaValue, { color: colors.text }]} selectable>
-                    {authProviderLabel}
-                  </Text>
                 </View>
               </View>
 
@@ -304,10 +287,10 @@ export default function ProfileScreen() {
                 </Pressable>
               )}
             </View>
-          </View>
+          </Animated.View>
 
           {/* Personal Information */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Personal Information</Text>
 
             <View style={styles.field}>
@@ -369,9 +352,9 @@ export default function ProfileScreen() {
               />
               <Text style={[styles.fieldHint, { color: colors.mutedText }]}>Number of people (1-3)</Text>
             </View>
-          </View>
+          </Animated.View>
 
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick actions</Text>
             <View style={styles.quickActionsGrid}>
               <QuickActionCard
@@ -399,10 +382,10 @@ export default function ProfileScreen() {
                 testID="quick-action-help-support"
               />
             </View>
-          </View>
+          </Animated.View>
 
           {/* Home Address */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Home Address</Text>
             <LocationPicker
               address={address}
@@ -418,25 +401,31 @@ export default function ProfileScreen() {
               currentLon={userLocation?.longitude}
               enableMapSelection
             />
-          </View>
+          </Animated.View>
 
           {/* Actions */}
-          <View style={styles.section}>
-            <Pressable
+          <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.section}>
+            <AnimatedPressable
               style={[styles.saveButton, { backgroundColor: colors.accent }, isSaving && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={isSaving}
+              hapticFeedback
             >
               <Text style={styles.saveButtonText}>
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Text>
-            </Pressable>
+            </AnimatedPressable>
 
-            <Pressable style={styles.dangerButton} onPress={handleClearData}>
+            <AnimatedPressable 
+              style={styles.dangerButton} 
+              onPress={handleClearData}
+              hapticFeedback
+              hapticStyle={Haptics.ImpactFeedbackStyle.Heavy}
+            >
               <MaterialIcons name="delete-outline" size={20} color="#DC2626" />
               <Text style={styles.dangerButtonText}>Clear All Data</Text>
-            </Pressable>
-          </View>
+            </AnimatedPressable>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -528,7 +517,7 @@ const styles = StyleSheet.create({
   },
   accountMetaRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   accountMetaItem: {
     flex: 1,
@@ -536,38 +525,42 @@ const styles = StyleSheet.create({
     borderRadius: Radii.md,
     borderCurve: 'continuous',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
     gap: 4,
+    minHeight: 60,
+    justifyContent: 'center',
   },
   accountMetaLabel: {
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+    marginBottom: 4,
   },
-  accountMetaHeader: {
+  accountMetaContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
-  providerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  accountMetaText: {
+    flex: 1,
+    paddingRight: Spacing.sm,
   },
   providerIconChip: {
-    width: 26,
-    height: 26,
-    borderRadius: 9,
+    width: 32,
+    height: 32,
+    borderRadius: 12,
     borderCurve: 'continuous',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: Spacing.xs,
   },
   accountMetaValue: {
     fontSize: 14,
     fontWeight: '700',
+    marginTop: 2,
   },
   accountHint: {
     fontSize: 12,

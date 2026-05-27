@@ -100,6 +100,7 @@ export function LocationPicker({
               <MapView
                 style={styles.map}
                 provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : undefined}
+                userInterfaceStyle={colors.isDark ? 'dark' : 'light'}
                 initialRegion={{
                   latitude: selectedLat,
                   longitude: selectedLon,
